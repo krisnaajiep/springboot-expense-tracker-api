@@ -10,11 +10,14 @@ Created on 27/06/25 22.57
 Version 1.0
 */
 
+import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import lombok.NonNull;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -38,5 +41,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
 
         return new ResponseEntity<>(Map.of("errors", errors), headers, status);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleGeneralException(Exception ex) {
+        logger.error("An unexpected error occurred: " + ex.getMessage(), ex);
+        return new ResponseEntity<>(
+                Map.of("message", "An unexpected error occurred: " + ex.getMessage()),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Object> handleDuplicateKey(ConflictException ex) {
+        return new ResponseEntity<>(Map.of("message", ex.getMessage()), HttpStatus.CONFLICT);
     }
 }
