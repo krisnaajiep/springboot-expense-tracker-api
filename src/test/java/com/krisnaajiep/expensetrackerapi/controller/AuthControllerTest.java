@@ -2,6 +2,7 @@ package com.krisnaajiep.expensetrackerapi.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.krisnaajiep.expensetrackerapi.dto.request.LoginRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.request.RegisterRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.model.User;
@@ -15,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
@@ -39,7 +42,11 @@ class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private final RegisterRequestDto registerRequestDto = new RegisterRequestDto();
+    private final LoginRequestDto loginRequestDto = new LoginRequestDto();
 
     private static final String USER_NAME = "John Doe";
     private static final String USER_EMAIL = "john@doe.com";
@@ -47,6 +54,7 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
+        passwordEncoder = new BCryptPasswordEncoder();
     }
 
     @AfterEach
@@ -70,7 +78,8 @@ class AuthControllerTest {
         ).andDo(result -> {
             Map<String, Object> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<>() {}
+                    new TypeReference<>() {
+                    }
             );
 
             System.out.printf("response: %s%n", response);
@@ -89,7 +98,7 @@ class AuthControllerTest {
         User user = User.builder()
                 .name(USER_NAME)
                 .email(USER_EMAIL)
-                .password(USER_PASSWORD)
+                .password(passwordEncoder.encode(USER_PASSWORD))
                 .build();
 
         userRepository.save(user);
@@ -107,7 +116,8 @@ class AuthControllerTest {
         ).andDo(result -> {
             Map<String, Object> response = objectMapper.readValue(
                     result.getResponse().getContentAsString(),
-                    new TypeReference<>() {}
+                    new TypeReference<>() {
+                    }
             );
 
             System.out.printf("response: %s%n", response);
@@ -122,7 +132,7 @@ class AuthControllerTest {
     void testRegisterSuccess() throws Exception {
         registerRequestDto.setName(USER_NAME);
         registerRequestDto.setEmail(USER_EMAIL);
-        registerRequestDto.setPassword(USER_PASSWORD);
+        registerRequestDto.setPassword(passwordEncoder.encode(USER_PASSWORD));
 
         mockMvc.perform(post("/register")
                 .accept(MediaType.ALL)
@@ -150,6 +160,104 @@ class AuthControllerTest {
             System.out.printf("Email from token: %s%n", email);
 
             assertEquals(registerRequestDto.getEmail(), email);
+        });
+    }
+
+    @Test
+    void testLoginBadRequest() throws Exception {
+        loginRequestDto.setEmail("john.com");
+        loginRequestDto.setPassword(null);
+
+        mockMvc.perform(post("/login")
+                .accept(MediaType.ALL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequestDto))
+        ).andExpectAll(
+                status().isBadRequest()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            System.out.printf("response: %s%n", response);
+
+            assertNotNull(response);
+            assertNotNull(response.get("errors"));
+            assertEquals(2, ((Map<?, ?>) response.get("errors")).size());
+            assertEquals("must be a well-formed email address", ((Map<?, ?>) response.get("errors")).get("email"));
+            assertEquals("must not be blank", ((Map<?, ?>) response.get("errors")).get("password"));
+        });
+    }
+
+    @Test
+    void testLoginUnauthenticated() throws Exception {
+        loginRequestDto.setEmail(USER_EMAIL);
+        loginRequestDto.setPassword(USER_PASSWORD);
+
+        mockMvc.perform(post("/login")
+                .accept(MediaType.ALL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequestDto))
+        ).andExpectAll(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            System.out.printf("response: %s%n", response);
+
+            assertNotNull(response);
+            assertNotNull(response.get("message"));
+            assertEquals("Invalid credentials", response.get("message"));
+        });
+    }
+
+    @Test
+    void testLoginSuccess() throws Exception {
+        User user = User.builder()
+                .name(USER_NAME)
+                .email(USER_EMAIL)
+                .password(passwordEncoder.encode(USER_PASSWORD))
+                .build();
+
+        System.out.printf("Encoded user password: %s%n", user.getPassword());
+
+        userRepository.save(user);
+
+        loginRequestDto.setEmail(USER_EMAIL);
+        loginRequestDto.setPassword(USER_PASSWORD);
+
+        mockMvc.perform(post("/login")
+                .accept(MediaType.ALL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequestDto))
+        ).andExpectAll(
+                status().isOk()
+        ).andDo(result -> {
+            TokenResponseDto response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            System.out.printf("Access Token: %s%n", response.getAccessToken());
+
+            assertNotNull(response.getAccessToken());
+
+            String accessToken = response.getAccessToken();
+
+            assertNotNull(jwtUtility.getEmail(accessToken));
+
+            String email = jwtUtility.getEmail(accessToken);
+
+            System.out.printf("Email from token: %s%n", email);
+
+            assertEquals(loginRequestDto.getEmail(), email);
         });
     }
 }
