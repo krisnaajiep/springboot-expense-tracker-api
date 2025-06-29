@@ -10,6 +10,7 @@ Created on 27/06/25 03.29
 Version 1.0
 */
 
+import com.krisnaajiep.expensetrackerapi.dto.request.LoginRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.request.RegisterRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.service.AuthService;
@@ -30,5 +31,11 @@ public class AuthController {
     public ResponseEntity<TokenResponseDto> register(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
         TokenResponseDto tokenResponseDto = authService.register(registerRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(tokenResponseDto);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
+        TokenResponseDto tokenResponseDto = authService.login(loginRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(tokenResponseDto);
     }
 }
