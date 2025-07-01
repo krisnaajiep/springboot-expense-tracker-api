@@ -24,4 +24,15 @@ public class ExpenseResponseDto {
     private BigDecimal amount;
     private String category;
     private LocalDate date;
+
+    @Override
+    public String toString() {
+        return "ExpenseResponseDto{" +
+                "id=" + id +
+                ", description='" + description + '\'' +
+                ", amount=" + amount +
+                ", category='" + category + '\'' +
+                ", date=" + date +
+                '}';
+    }
 }
