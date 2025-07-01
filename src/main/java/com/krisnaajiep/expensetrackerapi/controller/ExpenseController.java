@@ -1,0 +1,47 @@
+package com.krisnaajiep.expensetrackerapi.controller;
+
+/*
+IntelliJ IDEA 2025.1 (Ultimate Edition)
+Build #IU-251.23774.435, built on April 14, 2025
+@Author krisna a.k.a. Krisna Ajie
+Java Developer
+Created on 30/06/25 03.04
+@Last Modified 30/06/25 03.04
+Version 1.0
+*/
+
+import com.krisnaajiep.expensetrackerapi.dto.request.ExpenseRequestDto;
+import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseResponseDto;
+import com.krisnaajiep.expensetrackerapi.mapper.ExpenseMapper;
+import com.krisnaajiep.expensetrackerapi.model.Expense;
+import com.krisnaajiep.expensetrackerapi.security.CustomUserDetails;
+import com.krisnaajiep.expensetrackerapi.service.ExpenseService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequiredArgsConstructor
+public class ExpenseController {
+    private final ExpenseService expenseService;
+
+    @PostMapping(
+            value = "/expenses",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<ExpenseResponseDto> save(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody ExpenseRequestDto expenseRequestDto
+    ) {
+        Expense expense = ExpenseMapper.toExpense(userDetails.user(), expenseRequestDto);
+        ExpenseResponseDto expenseResponseDto = expenseService.save(expense);
+        return ResponseEntity.status(HttpStatus.CREATED).body(expenseResponseDto);
+    }
+}
