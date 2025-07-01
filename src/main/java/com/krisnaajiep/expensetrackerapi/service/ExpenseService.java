@@ -66,4 +66,24 @@ public class ExpenseService {
         // Convert the updated entity back to ExpenseResponseDto and return it
         return ExpenseMapper.toExpenseResponseDto(existingExpense);
     }
+
+    /**
+     * Deletes an expense by its ID.
+     *
+     * @param expenseId the ID of the expense to be deleted
+     */
+    @Transactional
+    public void delete(Long userId, Long expenseId) {
+        // Check if the expense exists
+        Expense existingExpense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new NotFoundException("Expense not found with ID: " + expenseId));
+
+        // Ensure the user of the expense matches the user in the provided expense
+        if (!existingExpense.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("User does not match the expense owner.");
+        }
+
+        // Delete the expense
+        expenseRepository.delete(existingExpense);
+    }
 }
