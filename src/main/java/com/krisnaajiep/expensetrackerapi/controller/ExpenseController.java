@@ -22,9 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,5 +41,20 @@ public class ExpenseController {
         Expense expense = ExpenseMapper.toExpense(userDetails.user(), expenseRequestDto);
         ExpenseResponseDto expenseResponseDto = expenseService.save(expense);
         return ResponseEntity.status(HttpStatus.CREATED).body(expenseResponseDto);
+    }
+
+    @PutMapping(
+            value = "/expenses/{expenseId}",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<ExpenseResponseDto> update(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long expenseId,
+            @Valid @RequestBody ExpenseRequestDto expenseRequestDto
+    ) {
+        Expense expense = ExpenseMapper.toExpense(userDetails.user(), expenseRequestDto);
+        ExpenseResponseDto expenseResponseDto = expenseService.update(expenseId, expense);
+        return ResponseEntity.ok(expenseResponseDto);
     }
 }
