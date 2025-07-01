@@ -24,8 +24,7 @@ import java.time.LocalDate;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -323,5 +322,95 @@ class ExpenseControllerTest {
             assertEquals(expenseRequestDto.getCategory(), response.getCategory());
             assertEquals(expenseRequestDto.getDate(), response.getDate());
         });
+    }
+
+    @Test
+    public void testDeleteExpenseUnauthorized() throws Exception {
+        mockMvc.perform(delete("/expenses/1")
+                .accept(MediaType.ALL)
+        ).andExpect(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            System.out.printf("Response: %s%n", response);
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals("Unauthorized", response.get("message"));
+        });
+    }
+
+    @Test
+    public void testDeleteExpenseNotFound() throws Exception {
+        // Assuming expense with ID 999 does not exist
+        long nonExistentExpenseId = 999L;
+
+        mockMvc.perform(delete("/expenses/" + nonExistentExpenseId)
+                .accept(MediaType.ALL)
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isNotFound()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            System.out.printf("Response: %s%n", response);
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals("Expense not found with ID: " + nonExistentExpenseId, response.get("message"));
+        });
+    }
+
+    @Test
+    public void testDeleteExpenseForbidden() throws Exception {
+        mockMvc.perform(delete("/expenses/" + anotherExpense.getId())
+                .accept(MediaType.ALL)
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isForbidden()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            System.out.printf("Response: %s%n", response);
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals("Forbidden", response.get("message"));
+        });
+    }
+
+    @Test
+    public void testDeleteExpenseSuccess() throws Exception {
+        Expense expense = Expense.builder()
+                .description("Expense to be deleted")
+                .category(Expense.Category.fromDisplayName("Clothing"))
+                .amount(new BigDecimal("100.00"))
+                .date(LocalDate.now())
+                .user(user)
+                .build();
+
+        Expense savedExpense = expenseRepository.save(expense);
+
+        mockMvc.perform(delete("/expenses/" + savedExpense.getId())
+                .accept(MediaType.ALL)
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isNoContent()
+        );
+
+        assertFalse(expenseRepository.existsById(savedExpense.getId()));
     }
 }
