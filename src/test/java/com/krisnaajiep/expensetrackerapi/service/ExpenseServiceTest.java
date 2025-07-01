@@ -122,4 +122,52 @@ class ExpenseServiceTest {
 
         verify(expenseRepository, times(1)).findById(expense.getId());
     }
+
+    @Test
+    void testDeleteFailure_ExpenseNotFound() {
+        when(expenseRepository.findById(expense.getId())).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> expenseService.delete(user.getId(), expense.getId()));
+
+        verify(expenseRepository, times(1)).findById(expense.getId());
+    }
+
+    @Test
+    void testDeleteFailure_AccessDenied() {
+        User anotherUser = User.builder()
+                .id(2L)
+                .email("jane@doe")
+                .password(SecureRandomUtility.generateRandomString(8))
+                .name("Jane Doe")
+                .build();
+
+        Expense anotherExpense = Expense.builder()
+                .id(2L)
+                .description("Another Expense")
+                .amount(new BigDecimal("200.00"))
+                .category(Expense.Category.fromDisplayName("Others"))
+                .date(LocalDate.now())
+                .user(anotherUser)
+                .build();
+
+        System.out.printf("Another Expense User ID: %d%n", anotherExpense.getUser().getId());
+        System.out.printf("Original Expense User ID: %d%n", expense.getUser().getId());
+
+        when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+
+        assertThrows(AccessDeniedException.class, () -> expenseService.delete(anotherUser.getId(), expense.getId()));
+
+        verify(expenseRepository, times(1)).findById(expense.getId());
+    }
+
+    @Test
+    void testDeleteSuccess() {
+        when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+
+        expenseService.delete(user.getId(), expense.getId());
+
+        verify(expenseRepository, times(1)).findById(expense.getId());
+
+        verify(expenseRepository, times(1)).delete(expense);
+    }
 }
