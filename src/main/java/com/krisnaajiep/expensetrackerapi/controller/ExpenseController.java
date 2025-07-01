@@ -57,4 +57,13 @@ public class ExpenseController {
         ExpenseResponseDto expenseResponseDto = expenseService.update(expenseId, expense);
         return ResponseEntity.ok(expenseResponseDto);
     }
+
+    @DeleteMapping("/expenses/{expenseId}")
+    public ResponseEntity<Void> delete(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long expenseId
+    ) {
+        expenseService.delete(userDetails.getId(), expenseId);
+        return ResponseEntity.noContent().build();
+    }
 }
