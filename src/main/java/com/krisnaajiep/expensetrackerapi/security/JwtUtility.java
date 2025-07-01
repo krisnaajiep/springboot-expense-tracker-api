@@ -13,7 +13,6 @@ Version 1.0
 import com.krisnaajiep.expensetrackerapi.config.JwtConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -44,28 +43,18 @@ public class JwtUtility {
                 .compact();
     }
 
-    public Jws<Claims> getClaims(String token) throws Exception {
-        try {
+    public Jws<Claims> getClaims(String token) {
             return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new Exception("Invalid JWT token");
-        }
     }
 
-    public String getSubject(String token) throws Exception {
-        return getClaims(token)
-                .getPayload()
-                .getSubject();
-    }
-
-    public String getEmail(String token) throws Exception {
+    public String getEmail(String token) {
         return getClaims(token)
                 .getPayload()
                 .get("email", String.class);
     }
 
-    public boolean isTokenExpired(String token) throws Exception {
-        Date expirationDate = getClaims(token).getPayload().getExpiration();
-        return expirationDate.before(new Date());
+    public boolean isTokenValid(String token) {
+        String email = getEmail(token);
+        return email != null && !email.isBlank();
     }
 }
