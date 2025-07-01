@@ -13,6 +13,8 @@ Version 1.0
 import com.krisnaajiep.expensetrackerapi.dto.request.LoginRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.request.RegisterRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
+import com.krisnaajiep.expensetrackerapi.mapper.UserMapper;
+import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +31,17 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<TokenResponseDto> register(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
-        TokenResponseDto tokenResponseDto = authService.register(registerRequestDto);
+        User user = UserMapper.toUser(registerRequestDto);
+        TokenResponseDto tokenResponseDto = authService.register(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(tokenResponseDto);
     }
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
-        TokenResponseDto tokenResponseDto = authService.login(loginRequestDto);
+        TokenResponseDto tokenResponseDto = authService.login(
+                loginRequestDto.getEmail(),
+                loginRequestDto.getPassword()
+        );
         return ResponseEntity.status(HttpStatus.OK).body(tokenResponseDto);
     }
 }

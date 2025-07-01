@@ -10,11 +10,8 @@ Created on 27/06/25 02.53
 Version 1.0
 */
 
-import com.krisnaajiep.expensetrackerapi.dto.request.LoginRequestDto;
-import com.krisnaajiep.expensetrackerapi.dto.request.RegisterRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
-import com.krisnaajiep.expensetrackerapi.mapper.UserMapper;
 import com.krisnaajiep.expensetrackerapi.security.CustomUserDetails;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
@@ -36,12 +33,11 @@ public class AuthService {
     private final JwtUtility jwtUtility;
     private final AuthenticationManager authenticationManager;
 
-    public TokenResponseDto register(RegisterRequestDto registerRequestDto) {
-        if (userRepository.existsByEmail(registerRequestDto.getEmail())) {
+    public TokenResponseDto register(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
             throw new ConflictException("User with this email already exists");
         }
 
-        User user = UserMapper.toUser(registerRequestDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
 
@@ -50,9 +46,9 @@ public class AuthService {
         return new TokenResponseDto(accessToken);
     }
 
-    public TokenResponseDto login(LoginRequestDto loginRequestDto) {
+    public TokenResponseDto login(String email, String password) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequestDto.getEmail(), loginRequestDto.getPassword())
+                new UsernamePasswordAuthenticationToken(email, password)
         );
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
