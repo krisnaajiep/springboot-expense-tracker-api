@@ -10,7 +10,6 @@ Created on 28/06/25 23.55
 Version 1.0
 */
 
-import com.krisnaajiep.expensetrackerapi.model.CustomUserDetails;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +18,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-@Service("userDetailsService")
+@Service
 @RequiredArgsConstructor
-public class UserDetailsServiceImpl implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
