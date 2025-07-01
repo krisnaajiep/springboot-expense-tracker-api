@@ -1,4 +1,4 @@
-package com.krisnaajiep.expensetrackerapi.model;
+package com.krisnaajiep.expensetrackerapi.security;
 
 /*
 IntelliJ IDEA 2025.1 (Ultimate Edition)
@@ -10,17 +10,14 @@ Created on 29/06/25 00.02
 Version 1.0
 */
 
-import lombok.RequiredArgsConstructor;
+import com.krisnaajiep.expensetrackerapi.model.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
 
-@RequiredArgsConstructor
-public class CustomUserDetails implements UserDetails {
-    private final User user;
-
+public record CustomUserDetails(User user) implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
