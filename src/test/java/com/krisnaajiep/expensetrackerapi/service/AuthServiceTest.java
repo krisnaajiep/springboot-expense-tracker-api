@@ -1,7 +1,5 @@
 package com.krisnaajiep.expensetrackerapi.service;
 
-import com.krisnaajiep.expensetrackerapi.dto.request.LoginRequestDto;
-import com.krisnaajiep.expensetrackerapi.dto.request.RegisterRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.security.CustomUserDetails;
@@ -48,8 +46,6 @@ class AuthServiceTest {
     private AuthService authService;
 
     private final User user = new User();
-    private final RegisterRequestDto registerRequestDto = new RegisterRequestDto();
-    private final LoginRequestDto loginRequestDto = new LoginRequestDto();
 
     private static final String ACCESS_TOKEN = SecureRandomUtility.generateRandomString(32);
     private static final String PASSWORD = SecureRandomUtility.generateRandomString(8);
@@ -61,13 +57,6 @@ class AuthServiceTest {
         user.setName("John Doe");
         user.setEmail("john@doe.com");
         user.setPassword(ENCODED_PASSWORD);
-
-        registerRequestDto.setName(user.getName());
-        registerRequestDto.setEmail(user.getEmail());
-        registerRequestDto.setPassword(PASSWORD);
-
-        loginRequestDto.setEmail(user.getEmail());
-        loginRequestDto.setPassword(PASSWORD);
     }
 
     @AfterEach
@@ -76,12 +65,12 @@ class AuthServiceTest {
 
     @Test
     void testRegisterSuccess() {
-        when(userRepository.existsByEmail(registerRequestDto.getEmail())).thenReturn(false);
-        when(passwordEncoder.encode(registerRequestDto.getPassword())).thenReturn(ENCODED_PASSWORD);
+        when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
+        when(passwordEncoder.encode(user.getPassword())).thenReturn(ENCODED_PASSWORD);
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
 
-        TokenResponseDto tokenResponseDto = authService.register(registerRequestDto);
+        TokenResponseDto tokenResponseDto = authService.register(user);
 
         assertNotNull(tokenResponseDto);
         assertEquals(ACCESS_TOKEN, tokenResponseDto.getAccessToken());
@@ -92,11 +81,11 @@ class AuthServiceTest {
 
     @Test
     void testRegisterFailure_EmailExists() {
-        when(userRepository.existsByEmail(registerRequestDto.getEmail())).thenReturn(true);
+        when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
 
         ConflictException exception = assertThrows(
                 ConflictException.class,
-                () -> authService.register(registerRequestDto)
+                () -> authService.register(user)
         );
 
         assertEquals("User with this email already exists", exception.getMessage());
@@ -114,7 +103,7 @@ class AuthServiceTest {
         when(userDetails.getUsername()).thenReturn(user.getEmail());
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
 
-        TokenResponseDto tokenResponseDto = authService.login(loginRequestDto);
+        TokenResponseDto tokenResponseDto = authService.login(user.getEmail(), PASSWORD);
 
         assertNotNull(tokenResponseDto);
         assertEquals(ACCESS_TOKEN, tokenResponseDto.getAccessToken());
@@ -131,7 +120,7 @@ class AuthServiceTest {
         when(authenticationManager.authenticate(any(Authentication.class)))
                 .thenThrow(BadCredentialsException.class);
 
-        assertThrows(BadCredentialsException.class, () -> authService.login(loginRequestDto));
+        assertThrows(BadCredentialsException.class, () -> authService.login(user.getEmail(), PASSWORD));
 
         verify(authenticationManager, times(1)).authenticate(any(Authentication.class));
         verify(authentication, never()).getPrincipal();
