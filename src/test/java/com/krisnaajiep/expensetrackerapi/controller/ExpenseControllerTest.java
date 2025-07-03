@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.krisnaajiep.expensetrackerapi.dto.request.ExpenseRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseResponseDto;
+import com.krisnaajiep.expensetrackerapi.dto.response.PagedResponseDto;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
@@ -21,7 +22,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -50,56 +54,27 @@ class ExpenseControllerTest {
     private String accessToken;
 
     private final ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto();
-
-    private static final String EXPENSE_DESCRIPTION = "Weekly grocery shopping";
-    private static final String EXPENSE_CATEGORY = "Groceries";
-    private static final BigDecimal EXPENSE_AMOUNT = new BigDecimal("150.00");
-    private static final LocalDate EXPENSE_DATE = LocalDate.now();
-
-    private static final String USER_NAME = "Test User";
-    private static final String USER_EMAIL = "test@user.com";
-    private static final String USER_PASSWORD = SecureRandomUtility.generateRandomString(8);
+    private final List<Expense> expenses = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
-        expenseRequestDto.setDescription(EXPENSE_DESCRIPTION);
-        expenseRequestDto.setCategory(EXPENSE_CATEGORY);
-        expenseRequestDto.setAmount(EXPENSE_AMOUNT);
-        expenseRequestDto.setDate(EXPENSE_DATE);
+        // Clean up the database before each test
+        expenseRepository.deleteAll();
+        userRepository.deleteAll();
 
         user = User.builder()
-                .name(USER_NAME)
-                .email(USER_EMAIL)
-                .password(USER_PASSWORD)
-                .build();
-
-        User anotherUser = User.builder()
-                .name("Another User")
-                .email("another@user.com")
+                .name("Test User")
+                .email("test@user.com")
                 .password(SecureRandomUtility.generateRandomString(8))
                 .build();
 
-        anotherExpense = Expense.builder()
-                .description("Another expense")
-                .category(Expense.Category.fromDisplayName("Utilities"))
-                .amount(new BigDecimal("200.00"))
-                .date(LocalDate.now())
-                .user(anotherUser)
-                .build();
-
         user = userRepository.save(user);
-
-        userRepository.save(anotherUser);
-        anotherExpense = expenseRepository.save(anotherExpense);
 
         accessToken = jwtUtility.generateToken(user.getId().toString(), user.getEmail());
     }
 
     @AfterEach
     void tearDown() {
-        // Clean up the database after each test
-        expenseRepository.deleteAll();
-        userRepository.deleteAll();
     }
 
     @Test
@@ -127,10 +102,7 @@ class ExpenseControllerTest {
 
     @Test
     public void testSaveExpenseBadRequest() throws Exception {
-        expenseRequestDto.setDescription("");
-        expenseRequestDto.setCategory("");
-        expenseRequestDto.setAmount(new BigDecimal("100.125")); // Invalid amount with more than 2 decimal places
-        expenseRequestDto.setDate(null);
+        setInvalidExpenseRequest(); // Set up an invalid expense request
 
         mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -155,6 +127,11 @@ class ExpenseControllerTest {
 
     @Test
     public void testSaveExpenseSuccess() throws Exception {
+        expenseRequestDto.setDescription("Weekly grocery shopping");
+        expenseRequestDto.setCategory("Groceries");
+        expenseRequestDto.setAmount(new BigDecimal("150.00"));
+        expenseRequestDto.setDate(LocalDate.now());
+
         mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
@@ -173,10 +150,10 @@ class ExpenseControllerTest {
 
             assertNotNull(response);
             assertNotNull(response.getId());
-            assertEquals(EXPENSE_DESCRIPTION, response.getDescription());
-            assertEquals(EXPENSE_AMOUNT, response.getAmount());
-            assertEquals(EXPENSE_CATEGORY, response.getCategory());
-            assertEquals(EXPENSE_DATE, response.getDate());
+            assertEquals(expenseRequestDto.getDescription(), response.getDescription());
+            assertEquals(expenseRequestDto.getAmount(), response.getAmount());
+            assertEquals(expenseRequestDto.getCategory(), response.getCategory());
+            assertEquals(expenseRequestDto.getDate(), response.getDate());
         });
     }
 
@@ -205,10 +182,7 @@ class ExpenseControllerTest {
 
     @Test
     public void testUpdateExpenseBadRequest() throws Exception {
-        expenseRequestDto.setDescription("");
-        expenseRequestDto.setCategory("");
-        expenseRequestDto.setAmount(new BigDecimal("100.125")); // Invalid amount with more than 2 decimal places
-        expenseRequestDto.setDate(null);
+        setInvalidExpenseRequest(); // Set up an invalid expense request for updating
 
         mockMvc.perform(put("/expenses/1")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -233,8 +207,8 @@ class ExpenseControllerTest {
 
     @Test
     public void testUpdateExpenseNotFound() throws Exception {
-        // Assuming expense with ID 999 does not exist
-        long nonExistentExpenseId = 999L;
+        setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
+        long nonExistentExpenseId = 999L; // Assuming expense with ID 999 does not exist
 
         mockMvc.perform(put("/expenses/" + nonExistentExpenseId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -260,6 +234,9 @@ class ExpenseControllerTest {
 
     @Test
     public void testUpdateExpenseForbidden() throws Exception {
+        setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
+        setAnotherExpense(); // Set up another expense for a different user
+
         mockMvc.perform(put("/expenses/" + anotherExpense.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
@@ -284,10 +261,7 @@ class ExpenseControllerTest {
 
     @Test
     public void testUpdateExpenseSuccess() throws Exception {
-        expenseRequestDto.setDescription("Updated description");
-        expenseRequestDto.setCategory("Groceries");
-        expenseRequestDto.setAmount(new BigDecimal("250.00"));
-        expenseRequestDto.setDate(LocalDate.now().plusDays(1));
+        setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
 
         Expense expense = Expense.builder()
                 .description("New expense")
@@ -372,6 +346,8 @@ class ExpenseControllerTest {
 
     @Test
     public void testDeleteExpenseForbidden() throws Exception {
+        setAnotherExpense(); // Set up another expense for a different user
+
         mockMvc.perform(delete("/expenses/" + anotherExpense.getId())
                 .accept(MediaType.ALL)
                 .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
@@ -412,5 +388,120 @@ class ExpenseControllerTest {
         );
 
         assertFalse(expenseRepository.existsById(savedExpense.getId()));
+    }
+
+    @Test
+    public void testFindAllExpensesUnauthorized() throws Exception {
+        mockMvc.perform(get("/expenses")
+                .accept(MediaType.APPLICATION_JSON)
+        ).andExpect(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            System.out.printf("Response: %s%n", response);
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals("Unauthorized", response.get("message"));
+        });
+    }
+
+    @Test
+    public void testFindAllExpensesSuccess() throws Exception {
+        setExpenses();
+
+        mockMvc.perform(get("/expenses?page=1&size=15&filter=past_week")
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isOk()
+        ).andDo(result -> {
+            PagedResponseDto<ExpenseResponseDto> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNotNull(response);
+
+            System.out.printf("Content: %s%n", response.getContent());
+            System.out.printf("Metadata: %s%n", response.getMetadata());
+
+            assertFalse(response.getContent().isEmpty());
+            assertEquals(5, response.getContent().size());
+
+            assertNotNull(response.getMetadata());
+            assertEquals(20, response.getMetadata().totalElements());
+
+            Optional<ExpenseResponseDto> notPastWeekExpense = response.getContent().stream()
+                    .filter(exp ->
+                            exp.getDate().isBefore(LocalDate.now().minusDays(7))
+                    ).findFirst();
+
+            assertNull(notPastWeekExpense.orElse(null));
+        });
+    }
+
+    private void setInvalidExpenseRequest() {
+        expenseRequestDto.setDescription("");
+        expenseRequestDto.setCategory("");
+        expenseRequestDto.setAmount(new BigDecimal("100.125")); // Invalid amount with more than 2 decimal places
+        expenseRequestDto.setDate(null);
+    }
+
+    private void setUpdateExpenseRequest() {
+        expenseRequestDto.setDescription("Updated expense description");
+        expenseRequestDto.setCategory("Others");
+        expenseRequestDto.setAmount(new BigDecimal("300.00"));
+        expenseRequestDto.setDate(LocalDate.now().plusDays(1));
+    }
+
+    private void setAnotherExpense() {
+        User anotherUser = User.builder()
+                .name("Another User")
+                .email("another@user.com")
+                .password(SecureRandomUtility.generateRandomString(8))
+                .build();
+
+        anotherUser = userRepository.save(anotherUser);
+
+        anotherExpense = Expense.builder()
+                .description("Another expense")
+                .category(Expense.Category.fromDisplayName("Utilities"))
+                .amount(new BigDecimal("200.00"))
+                .date(LocalDate.now())
+                .user(anotherUser)
+                .build();
+
+        anotherExpense = expenseRepository.save(anotherExpense);
+    }
+
+    private void setExpenses() {
+        for (int i = 0; i < 100; i++) {
+            LocalDate date;
+            if (i < 20) {
+                date = LocalDate.now().minusDays(6);
+            } else if (i < 60) {
+                date = LocalDate.now().minusDays(20);
+            } else {
+                date = LocalDate.now().minusDays(80);
+            }
+
+            Expense expense = Expense.builder()
+                    .description("Expense " + (i + 1))
+                    .amount(new BigDecimal(125 + i))
+                    .category(Expense.Category.fromDisplayName("Others"))
+                    .date(date)
+                    .user(user)
+                    .build();
+            expenses.add(expense);
+        }
+
+        expenseRepository.saveAll(expenses);
     }
 }
