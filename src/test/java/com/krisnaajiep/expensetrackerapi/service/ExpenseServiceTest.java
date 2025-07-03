@@ -13,10 +13,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,6 +38,7 @@ class ExpenseServiceTest {
 
     private final User user = new User();
     private final Expense expense = new Expense();
+    private final List<Expense> expenses = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -169,5 +176,62 @@ class ExpenseServiceTest {
         verify(expenseRepository, times(1)).findById(expense.getId());
 
         verify(expenseRepository, times(1)).delete(expense);
+    }
+
+    @Test
+    void testFindAllSuccess() {
+        setExpenses();
+
+        int pageNumber = 1; // 0-based index
+        int pageSize = 10; // Number of items per page
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+
+        when(expenseRepository.findAll(user.getId(), null, null, pageable)).thenReturn(
+                new PageImpl<>(expenses, pageable, expenses.size())
+        );
+
+        Page<ExpenseResponseDto> response = expenseService.findAll(
+                user.getId(),
+                null,
+                null,
+                null,
+                pageable
+        );
+
+        long expectedTotalPages = (long) Math.ceil((double) expenses.size() / pageSize);
+
+        assertNotNull(response);
+        assertEquals(expenses.size(), response.getTotalElements());
+        assertEquals(pageSize, response.getSize());
+        assertEquals(expectedTotalPages, response.getTotalPages());
+        assertEquals(pageNumber, response.getNumber());
+        assertEquals(expenses.size(), response.getContent().size());
+
+        for (int i = 0; i < expenses.size(); i++) {
+            ExpenseResponseDto dto = response.getContent().get(i);
+            Expense expense = expenses.get(i);
+            assertEquals(expense.getId(), dto.getId());
+            assertEquals(expense.getDescription(), dto.getDescription());
+            assertEquals(expense.getAmount(), dto.getAmount());
+            assertEquals(expense.getCategory().getDisplayName(), dto.getCategory());
+            assertEquals(expense.getDate(), dto.getDate());
+        }
+
+        verify(expenseRepository, times(1)).findAll(user.getId(), null, null, pageable);
+    }
+
+    private void setExpenses() {
+        expenses.clear();
+        for (int i = 0; i < 100; i++) {
+            Expense expense = Expense.builder()
+                    .id((long) (i + 1))
+                    .description("Expense " + (i + 1))
+                    .amount(new BigDecimal("100.00"))
+                    .category(Expense.Category.fromDisplayName("Others"))
+                    .date(LocalDate.now())
+                    .user(user)
+                    .build();
+            expenses.add(expense);
+        }
     }
 }
