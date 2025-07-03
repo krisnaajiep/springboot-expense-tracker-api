@@ -10,15 +10,20 @@ Created on 30/06/25 02.15
 Version 1.0
 */
 
+import com.krisnaajiep.expensetrackerapi.dto.request.ExpenseFilter;
 import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.mapper.ExpenseMapper;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -85,5 +90,33 @@ public class ExpenseService {
 
         // Delete the expense
         expenseRepository.delete(existingExpense);
+    }
+
+    /**
+     * Finds all expenses for a user with optional filtering and pagination.
+     *
+     * @param userId the ID of the user
+     * @param filter the filter criteria (optional)
+     * @param from   the start date for filtering (optional)
+     * @param to     the end date for filtering (optional)
+     * @param pageable pagination information
+     * @return a page of expenses as response DTOs
+     */
+    @Transactional(readOnly = true)
+    public Page<ExpenseResponseDto> findAll(
+            Long userId, ExpenseFilter filter, LocalDate from, LocalDate to, Pageable pageable
+    ) {
+        // Filter expenses based on the provided filter
+        if (filter != null) {
+            ExpenseFilter.DateRange dateRange = filter.resolve();
+            from = dateRange.startDate();
+            to = dateRange.endDate();
+        }
+
+        // Fetch all expenses for the user with pagination
+        Page<Expense> expenses = expenseRepository.findAll(userId, from, to, pageable);
+
+        // Convert the Page of Expense entities to a Page of ExpenseResponseDto
+        return expenses.map(ExpenseMapper::toExpenseResponseDto);
     }
 }
