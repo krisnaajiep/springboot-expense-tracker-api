@@ -55,6 +55,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex) {
+        logger.error("Invalid argument: " + ex.getMessage(), ex);
+        return new ResponseEntity<>(Map.of("message", ex.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Object> handleDuplicateKey(ConflictException ex) {
         return new ResponseEntity<>(Map.of("message", ex.getMessage()), HttpStatus.CONFLICT);
