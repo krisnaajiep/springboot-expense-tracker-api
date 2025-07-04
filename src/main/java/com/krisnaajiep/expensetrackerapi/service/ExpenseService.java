@@ -25,16 +25,32 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
+/**
+ * Service class for managing expenses. This class provides methods
+ * for creating, updating, deleting, and fetching user expenses.
+ * <p>
+ * Each method includes business logic to ensure that expenses are
+ * processed securely and correctly, such as enforcing ownership checks
+ * and applying filters.
+ */
 @Service
 @RequiredArgsConstructor
 public class ExpenseService {
+    /**
+     * Repository for managing persistence operations related to the Expense entity.
+     * Provides methods to perform CRUD operations and custom queries.
+     * <p>
+     * This repository is used by the ExpenseService to interact with the database,
+     * such as saving, updating, deleting, and retrieving Expense entities with filtering
+     * and pagination support.
+     */
     private final ExpenseRepository expenseRepository;
 
     /**
-     * Saves an expense for the given user.
+     * Saves the provided expense entity into the database and converts it into a DTO representation.
      *
-     * @param expense the expense to be saved
-     * @return the saved expense as a response DTO
+     * @param expense the expense entity to be persisted
+     * @return a DTO representation of the saved expense
      */
     @Transactional
     public ExpenseResponseDto save(Expense expense) {
@@ -46,10 +62,14 @@ public class ExpenseService {
     }
 
     /**
-     * Updates an existing expense.
+     * Updates an existing expense with new values provided in the given expense object.
+     * Validates that the expense exists and the user associated with it matches the user in the given expense.
      *
-     * @param expense the expense to be updated
-     * @return the updated expense as a response DTO
+     * @param expenseId the ID of the expense to be updated
+     * @param expense the new expense object containing updated details
+     * @return a DTO representation of the updated expense
+     * @throws NotFoundException if the expense with the given ID does not exist
+     * @throws AccessDeniedException if the user associated with the existing expense does not match the user in the provided expense
      */
     @Transactional
     public ExpenseResponseDto update(Long expenseId, Expense expense) {
@@ -73,9 +93,14 @@ public class ExpenseService {
     }
 
     /**
-     * Deletes an expense by its ID.
+     * Deletes an expense entry associated with a specific user.
+     * Validates that the expense exists and that the user is the owner of the expense
+     * before performing the deletion.
      *
+     * @param userId the ID of the user performing the deletion
      * @param expenseId the ID of the expense to be deleted
+     * @throws NotFoundException if the expense with the given ID does not exist
+     * @throws AccessDeniedException if the user attempting deletion is not the owner of the expense
      */
     @Transactional
     public void delete(Long userId, Long expenseId) {
@@ -93,14 +118,15 @@ public class ExpenseService {
     }
 
     /**
-     * Finds all expenses for a user with optional filtering and pagination.
+     * Retrieves a paginated list of expense records for a specified user, filtered by date range and other optional filters.
+     * Converts the result into a page of ExpenseResponseDto objects.
      *
-     * @param userId the ID of the user
-     * @param filter the filter criteria (optional)
-     * @param from   the start date for filtering (optional)
-     * @param to     the end date for filtering (optional)
-     * @param pageable pagination information
-     * @return a page of expenses as response DTOs
+     * @param userId the ID of the user whose expenses are to be retrieved
+     * @param filter an optional filter to restrict the date range (e.g., past week, month, etc.)
+     * @param from the start date for the date range filter (overridden if filter is provided)
+     * @param to the end date for the date range filter (overridden if filter is provided)
+     * @param pageable the pagination and sorting information
+     * @return a paginated list of ExpenseResponseDto objects representing the user's expenses
      */
     @Transactional(readOnly = true)
     public Page<ExpenseResponseDto> findAll(

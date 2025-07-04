@@ -20,7 +20,6 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
-    // Additional query methods can be defined here if needed
     @Query("""
             SELECT e FROM Expense e
                         WHERE e.user.id = :userId
