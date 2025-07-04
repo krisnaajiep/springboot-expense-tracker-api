@@ -13,10 +13,12 @@ Version 1.0
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -44,6 +46,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
 
         return new ResponseEntity<>(Map.of("errors", errors), headers, status);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            @NotNull HttpMessageNotReadableException ex,
+            @NotNull HttpHeaders headers,
+            @NotNull HttpStatusCode status,
+            @NotNull WebRequest request
+    ) {
+        logger.error("An error occurred while parsing the request body: " + ex.getMessage(), ex);
+        return super.handleHttpMessageNotReadable(ex, headers, status, request);
     }
 
     @ExceptionHandler(Exception.class)
