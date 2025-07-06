@@ -8,6 +8,7 @@ import com.krisnaajiep.expensetrackerapi.dto.response.PagedResponseDto;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
+import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
@@ -38,6 +39,9 @@ class ExpenseControllerTest {
     private ExpenseRepository expenseRepository;
 
     @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -60,6 +64,7 @@ class ExpenseControllerTest {
     void setUp() {
         // Clean up the database before each test
         expenseRepository.deleteAll();
+        refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
 
         user = User.builder()
