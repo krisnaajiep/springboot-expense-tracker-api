@@ -40,6 +40,7 @@ and user authentication in Spring Boot.
 - **Delete an existing expense**: Delete an existing expense using the `DELETE` method.
 - **List and filter all past expenses**: Get the list of expenses with pagination and filtering by date range using the
   `GET` method.
+- **Refresh Token**: Get a new access token using the `POST` method.
 
 ## Setup
 
@@ -92,16 +93,10 @@ How to install:
    mvn clean package -DskipTests
    ```
 
-7. Copy the JAR file from the `target/` directory
+7. Run the JAR file
 
    ```bash
-   cp target/expense-tracker-api-1.0.0.jar expense-tracker-api.jar 
-   ```
-
-8. Run the JAR file
-
-   ```bash
-   java -jar expense-tracker-api.jar
+   java -jar target/expense-tracker-api-1.1.0.jar
    ```
 
 ## Usage
@@ -144,7 +139,8 @@ Example API Endpoints:
 
       ```json
       {
-        "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access"
+        "access-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access",
+        "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_refresh"
       }
       ```
 
@@ -182,11 +178,49 @@ Example API Endpoints:
 
       ```json
       {
-        "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access"
+        "access-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access",
+        "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_refresh"
       }
       ```
 
-3. **Create an expense**
+3. **Refresh Token**
+
+    - Method: `POST`
+    - Endpoint: `/refresh`
+    - Request Header:
+
+        - `Content-Type` (string)—The content type of request body (must be `application/json`).
+
+    - Request Body:
+
+        - `refresh-token` (string)—The refresh token.
+
+    - Example Request:
+
+      ```http
+      POST /refresh
+      Content-Type: application/json
+      
+      {
+        "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_refresh"
+      }
+      ```
+
+    - Response:
+
+        - Status: `200 OK`
+        - Content-Type: `application/json`
+
+    - Example Response:
+
+      ```json
+      {
+        "access-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_new_access",
+        "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_new_refresh"
+      }
+      ```
+
+4. **Create an expense**
 
     - Method: `POST`
     - Endpoint: `/expenses`
@@ -241,7 +275,7 @@ Example API Endpoints:
       }
       ```
 
-4. **Update an existing expense**
+5. **Update an existing expense**
 
     - Method: `PUT`
     - Endpoint: `/expenses/{id}`
@@ -296,7 +330,7 @@ Example API Endpoints:
       }
       ```
 
-5. **Delete an existing expense**
+6. **Delete an existing expense**
 
     - Method: `DELETE`
     - Endpoint: `/expenses/{id}`
@@ -308,7 +342,7 @@ Example API Endpoints:
 
         - Status: `204 No Content`
 
-6. **List and filter expenses**
+7. **List and filter expenses**
 
     - Method: `GET`
     - Endpoint: `/expenses`
