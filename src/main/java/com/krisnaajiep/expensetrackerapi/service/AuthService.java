@@ -12,11 +12,16 @@ Version 1.0
 
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
+import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
+import com.krisnaajiep.expensetrackerapi.model.RefreshToken;
+import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.security.CustomUserDetails;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
+import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,13 +29,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 
 /**
  * Service class responsible for handling authentication and user management processes.
- * AuthService provides methods for registering new users and authenticating
- * existing users. It integrates with UserRepository for database interactions,
- * PasswordEncoder for secure password handling, JwtUtility for token generation,
- * and AuthenticationManager for credential validation.
+ * AuthService provides methods for registering new users, authenticating existing users,
+ * and refresh tokens. It integrates with UserRepository and RefreshTokenRepository for
+ * database interactions, PasswordEncoder for secure password handling, JwtUtility for
+ * token generation, and AuthenticationManager for credential validation.
  */
 @Service
 @RequiredArgsConstructor
@@ -42,6 +48,8 @@ public class AuthService {
      * verify the existence of users, retrieve user information, and save new users.
      */
     private final UserRepository userRepository;
+
+    private final RefreshTokenRepository refreshTokenRepository;
 
     /**
      * An instance of the PasswordEncoder interface used for encoding and decoding
@@ -67,12 +75,19 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     /**
+     * A constant representing the expiration time for a refresh token in milliseconds.
+     * This value is used to determine the duration for which a generated refresh token
+     * remains valid before it can no longer be used and must be renewed.
+     */
+    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 86400000; // 24 hours
+
+    /**
      * Registers a new user into the system. If a user with the same email already exists,
      * a ConflictException is thrown. The user's password is securely encoded before being
      * saved. Upon successful registration, an access token is generated and returned.
      *
      * @param user the User object containing the user details to be registered
-     * @return a TokenResponseDto object containing the generated access token for the registered user
+     * @return a TokenResponseDto object containing the generated access token and refresh token for the registered user
      * @throws ConflictException if a user with the same email already exists
      */
     public TokenResponseDto register(User user) {
@@ -85,7 +100,11 @@ public class AuthService {
 
         String accessToken = jwtUtility.generateToken(savedUser.getId().toString(), savedUser.getEmail());
 
-        return new TokenResponseDto(accessToken);
+        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        RefreshToken refreshToken = createRefreshToken(savedUser, rawRefreshToken);
+        refreshTokenRepository.save(refreshToken);
+
+        return new TokenResponseDto(accessToken, rawRefreshToken);
     }
 
     /**
@@ -94,7 +113,7 @@ public class AuthService {
      *
      * @param email the email of the user attempting to log in
      * @param password the password of the user attempting to log in
-     * @return a TokenResponseDto object containing the generated access token for the authenticated user
+     * @return a TokenResponseDto object containing the generated access token and refresh token for the authenticated user
      */
     public TokenResponseDto login(String email, String password) {
         Authentication authentication = authenticationManager.authenticate(
@@ -105,6 +124,56 @@ public class AuthService {
 
         String accessToken = jwtUtility.generateToken(userDetails.getId().toString(), userDetails.getUsername());
 
-        return new TokenResponseDto(accessToken);
+        refreshTokenRepository.deleteAllByUserId(userDetails.getId());
+        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        RefreshToken refreshToken = createRefreshToken(userDetails.user(), rawRefreshToken);
+        refreshTokenRepository.save(refreshToken);
+
+        return new TokenResponseDto(accessToken, rawRefreshToken);
+    }
+
+    /**
+     * Refreshes the access token and generates a new refresh token using the provided refresh token.
+     * Validates the provided token and checks its expiration status. If valid, it generates a new
+     * access token linked to the associated user and replaces the expired refresh token with a new one.
+     *
+     * @param token the refresh token provided by the user
+     * @return a TokenResponseDto object containing the newly generated access token and refresh token
+     * @throws UnauthorizedException if the provided refresh token is invalid or expired
+     */
+    public TokenResponseDto refreshToken(String token) {
+        String hashedToken = DigestUtils.sha256Hex(token);
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(hashedToken)
+                .orElseThrow(() -> new UnauthorizedException("Invalid refresh token"));
+
+        if (refreshToken.getExpiryDate().isBefore(Instant.now())) {
+            throw new UnauthorizedException("Refresh token expired");
+        }
+
+        User user = refreshToken.getUser();
+        String accessToken = jwtUtility.generateToken(user.getId().toString(), user.getEmail());
+
+        String newRefreshToken = SecureRandomUtility.generateRandomString(32);
+        refreshToken.setToken(passwordEncoder.encode(newRefreshToken));
+        refreshToken.setExpiryDate(Instant.now().plusMillis(REFRESH_TOKEN_EXPIRATION_TIME));
+
+        return new TokenResponseDto(accessToken, newRefreshToken);
+    }
+
+    /**
+     * Creates a new refresh token for a given user and token string. The method
+     * generates a hashed version of the provided token, sets an expiration date,
+     * and associates the token with the specified user.
+     *
+     * @param user the User object with whom the refresh token will be associated
+     * @param token the raw token string to be hashed and stored
+     * @return a newly created RefreshToken object containing a hashed token and expiry date
+     */
+    private RefreshToken createRefreshToken(User user, String token) {
+        return RefreshToken.builder()
+                .user(user)
+                .token(DigestUtils.sha256Hex(token))
+                .expiryDate(Instant.now().plusMillis(REFRESH_TOKEN_EXPIRATION_TIME))
+                .build();
     }
 }
