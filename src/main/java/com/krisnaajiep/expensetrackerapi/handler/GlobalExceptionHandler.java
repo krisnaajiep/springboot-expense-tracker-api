@@ -12,6 +12,8 @@ Version 1.0
 
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
+import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
+import com.krisnaajiep.expensetrackerapi.util.ValidationUtility;
 import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -29,6 +32,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -41,8 +45,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ) {
         Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
+        BindingResult result = ex.getBindingResult();
+        Optional<Object> target = Optional.ofNullable(result.getTarget());
+        Class<?> dtoClass = target.map(Object::getClass).orElse(null);
+        result.getFieldErrors().forEach(error -> {
+                    String fieldName = dtoClass != null
+                            ? ValidationUtility.getJsonPropertyName(error, dtoClass)
+                            : error.getField();
+
+                    errors.put(fieldName, error.getDefaultMessage());
+                }
         );
 
         return new ResponseEntity<>(Map.of("errors", errors), headers, status);
@@ -63,7 +75,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleGeneralException(Exception ex) {
         logger.error("An unexpected error occurred: " + ex.getMessage(), ex);
         return new ResponseEntity<>(
-                Map.of("message", "An unexpected error occurred: " + ex.getMessage()),
+                Map.of("message", "Internal server error"),
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
@@ -83,6 +95,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex) {
         logger.warn("Invalid credentials: " + ex.getMessage());
         return new ResponseEntity<>(Map.of("message", "Invalid credentials"), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Object> handleUnauthorizedException(UnauthorizedException ex) {
+        return new ResponseEntity<>(Map.of("message", ex.getMessage()), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
