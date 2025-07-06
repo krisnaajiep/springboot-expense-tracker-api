@@ -74,7 +74,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless sessions
                 .httpBasic(AbstractHttpConfigurer::disable) // Disable basic authentication
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/register", "/login").permitAll() // Allow access to the test endpoint
+                        .requestMatchers("/register", "/login", "/refresh").permitAll() // Allow access to the test endpoint
                         .anyRequest().authenticated()) // Require authentication for all other requests
                 .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
