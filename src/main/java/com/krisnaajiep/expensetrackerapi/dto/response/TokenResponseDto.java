@@ -19,4 +19,13 @@ import lombok.Getter;
 public class TokenResponseDto {
     @JsonProperty("access-token")
     private String accessToken;
+
+    @JsonProperty("refresh-token")
+    private String refreshToken;
+
+//    @JsonProperty("token-type")
+//    private String tokenType;
+//
+//    @JsonProperty("expires-in")
+//    private Long expiresIn;
 }
