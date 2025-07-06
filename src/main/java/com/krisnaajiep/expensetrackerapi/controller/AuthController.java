@@ -11,6 +11,7 @@ Version 1.0
 */
 
 import com.krisnaajiep.expensetrackerapi.dto.request.LoginRequestDto;
+import com.krisnaajiep.expensetrackerapi.dto.request.RefreshTokenRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.request.RegisterRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.mapper.UserMapper;
@@ -50,6 +51,18 @@ public class AuthController {
         TokenResponseDto tokenResponseDto = authService.login(
                 loginRequestDto.getEmail(),
                 loginRequestDto.getPassword()
+        );
+        return ResponseEntity.status(HttpStatus.OK).body(tokenResponseDto);
+    }
+
+    @PostMapping(
+            value = "/refresh",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<TokenResponseDto> refresh(@Valid @RequestBody RefreshTokenRequestDto refreshTokenRequestDto) {
+        TokenResponseDto tokenResponseDto = authService.refreshToken(
+                refreshTokenRequestDto.getRefreshToken()
         );
         return ResponseEntity.status(HttpStatus.OK).body(tokenResponseDto);
     }
