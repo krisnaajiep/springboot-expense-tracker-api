@@ -96,7 +96,7 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-1.1.0.jar
+   java -jar target/expense-tracker-api-1.2.0.jar
    ```
 
 ## Usage
@@ -413,22 +413,38 @@ If an API key is missing, malformed, or invalid, you will receive an HTTP 401 Un
 }
 ```
 
+## Rate and Usage Limits
+
+API access rate limits apply on a per-IP address basis in unit time.
+The limit is 60 requests per minute.
+If you exceed either limit, your request will return an HTTP 429 `Too Many Requests` status code.
+
+Each API response returns the following set of headers to help you identify your use status:
+
+| Header                  | Description                                                                       |
+|-------------------------|-----------------------------------------------------------------------------------|
+| `X-RateLimit-Limit`     | The maximum number of requests that the consumer is permitted to make per minute. |
+| `X-RateLimit-Remaining` | The number of requests remaining in the current rate limit window.                |
+| `X-RateLimit-Reset`     | The time at which the current rate limit window resets in UTC epoch seconds.      |
+
 ## HTTP Response Codes
 
 The API returns the following status codes depending on the success or failure of the request.
 
-| Status Code                | Description                                                                                  |
-|----------------------------|----------------------------------------------------------------------------------------------|
-| 200 OK                     | The request was processed successfully.                                                      |
-| 201 Created                | The new resource was created successfully.                                                   |
-| 400 Bad Request            | The server could not understand the request due to invalid syntax.                           |
-| 401 Unauthorized           | Authentication is required or the access token is invalid.                                   |
-| 403 Forbidden              | Access to the requested resource is forbidden.                                               |
-| 404 Not Found              | The requested resource was not found.                                                        |
-| 405 Method Not Allowed     | The HTTP method is not supported for the requested resource.                                 |
-| 409 Conflict               | Indicates a conflict between the request and the current state of a resource on a web server |
-| 415 Unsupported Media Type | The media format of the requested data is not supported by the server.                       |
-| 500 Internal Server Error  | An unexpected server error occurred.                                                         |
+| Status Code                | Description                                                                                     |
+|----------------------------|-------------------------------------------------------------------------------------------------|
+| 200 OK                     | The request was processed successfully.                                                         |
+| 201 Created                | The new resource was created successfully.                                                      |
+| 400 Bad Request            | The server could not understand the request due to invalid syntax.                              |
+| 401 Unauthorized           | Authentication is required or the access token is invalid.                                      |
+| 403 Forbidden              | Access to the requested resource is forbidden.                                                  |
+| 404 Not Found              | The requested resource was not found.                                                           |
+| 405 Method Not Allowed     | The HTTP method is not supported for the requested resource.                                    |
+| 409 Conflict               | Indicates a conflict between the request and the current state of a resource on a web server.   |
+| 415 Unsupported Media Type | The media format of the requested data is not supported by the server.                          |
+| 429 Too Many Request       | The client has sent too many requests in a given amount of time (rate limiting).                |
+| 500 Internal Server Error  | An unexpected server error occurred.                                                            |
+| 503 Service Unavailable    | The server is temporarily unable to handle the request, usually due to maintenance or overload. |
 
 ## Project Status
 

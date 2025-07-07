@@ -65,9 +65,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         long resetTimestamp = Instant.now().plusNanos(probe.getNanosToWaitForRefill()).getEpochSecond();
 
-        response.setHeader("X-Rate-Limit-Limit", String.valueOf(capacity));
-        response.setHeader("X-Rate-Limit-Remaining", String.valueOf(probe.getRemainingTokens()));
-        response.setHeader("X-Rate-Limit-Reset", String.valueOf(resetTimestamp));
+        response.setHeader("X-RateLimit-Limit", String.valueOf(capacity));
+        response.setHeader("X-RateLimit-Remaining", String.valueOf(probe.getRemainingTokens()));
+        response.setHeader("X-RateLimit-Reset", String.valueOf(resetTimestamp));
 
         if (probe.isConsumed()) {
             filterChain.doFilter(request, response);
