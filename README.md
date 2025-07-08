@@ -96,7 +96,7 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-1.2.0.jar
+   java -jar target/expense-tracker-api-1.2.1.jar
    ```
 
 ## Usage
