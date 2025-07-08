@@ -36,4 +36,7 @@ public class RefreshToken extends Auditable {
 
     @Column(name = "ExpiryDate", nullable = false)
     private Instant expiryDate;
+
+    @Column(name = "RotatedAt")
+    private Instant rotatedAt;
 }
