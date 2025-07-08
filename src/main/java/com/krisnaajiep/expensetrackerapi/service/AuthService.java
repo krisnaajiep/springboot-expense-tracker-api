@@ -10,6 +10,7 @@ Created on 27/06/25 02.53
 Version 1.0
 */
 
+import com.krisnaajiep.expensetrackerapi.config.AuthConfig;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
@@ -74,12 +75,7 @@ public class AuthService {
      */
     private final AuthenticationManager authenticationManager;
 
-    /**
-     * A constant representing the expiration time for a refresh token in milliseconds.
-     * This value is used to determine the duration for which a generated refresh token
-     * remains valid before it can no longer be used and must be renewed.
-     */
-    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 86400000; // 24 hours
+    private final AuthConfig authConfig;
 
     /**
      * Registers a new user into the system. If a user with the same email already exists,
@@ -155,7 +151,8 @@ public class AuthService {
 
         String newRefreshToken = SecureRandomUtility.generateRandomString(32);
         refreshToken.setToken(passwordEncoder.encode(newRefreshToken));
-        refreshToken.setExpiryDate(Instant.now().plusMillis(REFRESH_TOKEN_EXPIRATION_TIME));
+        refreshToken.setExpiryDate(Instant.now().plusMillis(authConfig.getRefreshTokenExpiration()));
+        refreshToken.setRotatedAt(Instant.now());
 
         return new TokenResponseDto(accessToken, newRefreshToken);
     }
@@ -173,7 +170,7 @@ public class AuthService {
         return RefreshToken.builder()
                 .user(user)
                 .token(DigestUtils.sha256Hex(token))
-                .expiryDate(Instant.now().plusMillis(REFRESH_TOKEN_EXPIRATION_TIME))
+                .expiryDate(Instant.now().plusMillis(authConfig.getRefreshTokenExpiration()))
                 .build();
     }
 }
