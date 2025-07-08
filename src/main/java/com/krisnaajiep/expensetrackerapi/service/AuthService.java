@@ -150,7 +150,7 @@ public class AuthService {
         String accessToken = jwtUtility.generateToken(user.getId().toString(), user.getEmail());
 
         String newRefreshToken = SecureRandomUtility.generateRandomString(32);
-        refreshToken.setToken(passwordEncoder.encode(newRefreshToken));
+        refreshToken.setToken(DigestUtils.sha256Hex(newRefreshToken));
         refreshToken.setExpiryDate(Instant.now().plusMillis(authConfig.getRefreshTokenExpiration()));
         refreshToken.setRotatedAt(Instant.now());
 
