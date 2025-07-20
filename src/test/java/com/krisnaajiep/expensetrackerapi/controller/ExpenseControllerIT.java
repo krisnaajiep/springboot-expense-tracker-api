@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-class ExpenseControllerTest {
+class ExpenseControllerIT {
     @Autowired
     private ExpenseRepository expenseRepository;
 
