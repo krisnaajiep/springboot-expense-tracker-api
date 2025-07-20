@@ -100,8 +100,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
             assertNotNull(response.get("errors"));
             assertEquals(3, ((Map<?, ?>) response.get("errors")).size());
@@ -138,8 +136,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
             assertNotNull(response.get("message"));
             assertEquals("User with this email already exists", response.get("message"));
@@ -165,8 +161,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("Access Token: %s%n", response.getAccessToken());
-
             assertNotNull(response.getAccessToken());
 
             String accessToken = response.getAccessToken();
@@ -175,13 +169,9 @@ class AuthControllerTest {
 
             String email = jwtUtility.getEmail(accessToken);
 
-            System.out.printf("Email from token: %s%n", email);
-
             assertEquals(registerRequestDto.getEmail(), email);
 
             assertNotNull(response.getRefreshToken());
-
-            System.out.printf("Refresh token: %s%n", response.getRefreshToken());
         });
     }
 
@@ -202,8 +192,6 @@ class AuthControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("response: %s%n", response);
 
             assertNotNull(response);
             assertNotNull(response.get("errors"));
@@ -231,8 +219,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
             assertNotNull(response.get("message"));
             assertEquals("Invalid credentials", response.get("message"));
@@ -246,8 +232,6 @@ class AuthControllerTest {
                 .email(USER_EMAIL)
                 .password(passwordEncoder.encode(USER_PASSWORD))
                 .build();
-
-        System.out.printf("Encoded user password: %s%n", user.getPassword());
 
         userRepository.save(user);
 
@@ -267,8 +251,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("Access Token: %s%n", response.getAccessToken());
-
             assertNotNull(response.getAccessToken());
 
             String accessToken = response.getAccessToken();
@@ -277,13 +259,9 @@ class AuthControllerTest {
 
             String email = jwtUtility.getEmail(accessToken);
 
-            System.out.printf("Email from token: %s%n", email);
-
             assertEquals(loginRequestDto.getEmail(), email);
 
             assertNotNull(response.getRefreshToken());
-
-            System.out.printf("Refresh token: %s%n", response.getRefreshToken());
         });
     }
 
@@ -303,8 +281,6 @@ class AuthControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("response: %s%n", response);
 
             assertNotNull(response);
             assertNotNull(response.get("errors"));
@@ -329,8 +305,6 @@ class AuthControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("response: %s%n", response);
 
             assertNotNull(response);
             assertNotNull(response.get("message"));
@@ -357,8 +331,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
             assertNotNull(response.get("message"));
             assertEquals("Refresh token expired", response.get("message"));
@@ -383,8 +355,6 @@ class AuthControllerTest {
                     new TypeReference<>() {}
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
 
             assertNotNull(response.getAccessToken());
@@ -393,13 +363,7 @@ class AuthControllerTest {
 
             assertNotNull(jwtUtility.getEmail(accessToken));
 
-            String email = jwtUtility.getEmail(accessToken);
-
-            System.out.printf("Email from token: %s%n", email);
-
             assertNotNull(response.getRefreshToken());
-
-            System.out.printf("New refresh token: %s%n", response.getRefreshToken());
         });
     }
 

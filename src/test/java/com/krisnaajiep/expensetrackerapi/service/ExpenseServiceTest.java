@@ -103,9 +103,6 @@ class ExpenseServiceTest {
                 .user(anotherUser)
                 .build();
 
-        System.out.printf("Another Expense User ID: %d%n", anotherExpense.getUser().getId());
-        System.out.printf("Original Expense User ID: %d%n", expense.getUser().getId());
-
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
 
         assertThrows(AccessDeniedException.class, () -> expenseService.update(expense.getId(), anotherExpense));
@@ -147,18 +144,6 @@ class ExpenseServiceTest {
                 .password(SecureRandomUtility.generateRandomString(8))
                 .name("Jane Doe")
                 .build();
-
-        Expense anotherExpense = Expense.builder()
-                .id(2L)
-                .description("Another Expense")
-                .amount(new BigDecimal("200.00"))
-                .category(Expense.Category.fromDisplayName("Others"))
-                .date(LocalDate.now())
-                .user(anotherUser)
-                .build();
-
-        System.out.printf("Another Expense User ID: %d%n", anotherExpense.getUser().getId());
-        System.out.printf("Original Expense User ID: %d%n", expense.getUser().getId());
 
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
 
