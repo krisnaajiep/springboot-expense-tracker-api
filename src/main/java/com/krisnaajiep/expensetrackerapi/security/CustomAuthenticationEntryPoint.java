@@ -35,11 +35,10 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             HttpServletResponse response,
             AuthenticationException authException
     ) throws IOException {
-        log.error("Authentication error. Message - {} {} {}",
+        log.warn("Authentication error. Message - {} {} {}",
                 authException.getMessage(),
                 request.getMethod(),
-                request.getRequestURI(),
-                authException
+                request.getRequestURI()
         );
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
