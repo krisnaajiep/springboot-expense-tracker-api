@@ -26,8 +26,9 @@ and user authentication in Spring Boot.
 
 - Java 21.0.6 LTS
 - Maven 3.9.9
+- H2 Database 2.3.232
 - Microsoft SQL Server 2022
-- Spring Boot 3.4.5
+- Spring Boot 3.4.7
 - Lombok 1.18.38
 - [JJWT](https://github.com/jwtk/jjwt) 0.12.6
 
@@ -47,7 +48,6 @@ and user authentication in Spring Boot.
 To run this API, you’ll need:
 
 * **Java**: Version 21 or higher
-* **Maven**: Version 3.x
 * **Microsoft SQL Server** 2022 or higher
 
 How to install:
@@ -90,7 +90,7 @@ How to install:
 6. Build the project
 
    ```bash
-   mvn clean package -DskipTests
+   ./mvnw clean package -DskipTests
    ```
 
 7. Run the JAR file
@@ -449,6 +449,8 @@ The API returns the following status codes depending on the success or failure o
 ## Project Status
 
 Project is: _complete_.
+
+[![CI](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/maven.yml/badge.svg)](https://github.com/username/repo/actions)
 
 ## Acknowledgements
 
