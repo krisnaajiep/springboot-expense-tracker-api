@@ -4,8 +4,10 @@
         "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <module name="Checker">
+    <module name="JavadocPackage"/>
     <module name="TreeWalker">
         <!-- Naming Conventions -->
+        <module name="ConstantName"/>
         <module name="MethodName"/>
         <module name="TypeName"/>
         <module name="MemberName"/>
@@ -22,5 +24,9 @@
         <!-- Block Checks -->
         <module name="EmptyBlock"/>
         <module name="NeedBraces"/>
+    </module>
+    <module name="SuppressionFilter">
+        <property name="file" value="config/suppressions.xml"/>
+        <property name="optional" value="false"/>
     </module>
 </module>
