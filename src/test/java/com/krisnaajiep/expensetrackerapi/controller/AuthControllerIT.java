@@ -367,6 +367,31 @@ class AuthControllerIT {
         });
     }
 
+    @Test
+    public void testRevokeSuccess() throws Exception {
+        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        setRefreshToken(rawRefreshToken, Instant.now().plusMillis(86400000));
+        refreshTokenRequestDto.setRefreshToken(rawRefreshToken);
+
+        String accessToken = jwtUtility.generateToken(USER_EMAIL, USER_EMAIL);
+
+        mockMvc.perform(post("/revoke")
+                .accept(MediaType.ALL)
+                .header("Authorization", "Bearer " + accessToken)
+        ).andExpect(
+                status().isOk()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {}
+            );
+
+            assertNotNull(response);
+            assertNotNull(response.get("message"));
+            assertEquals("All tokens revoked successfully", response.get("message"));
+        });
+    }
+
     private void setRefreshToken(String token, Instant expiryDate) {
         User user = User.builder()
                 .name(USER_NAME)
