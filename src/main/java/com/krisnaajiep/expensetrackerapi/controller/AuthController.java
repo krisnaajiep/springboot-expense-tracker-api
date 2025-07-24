@@ -16,15 +16,19 @@ import com.krisnaajiep.expensetrackerapi.dto.request.RegisterRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.mapper.UserMapper;
 import com.krisnaajiep.expensetrackerapi.model.User;
+import com.krisnaajiep.expensetrackerapi.security.CustomUserDetails;
 import com.krisnaajiep.expensetrackerapi.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -65,5 +69,14 @@ public class AuthController {
                 refreshTokenRequestDto.getRefreshToken()
         );
         return ResponseEntity.status(HttpStatus.OK).body(tokenResponseDto);
+    }
+
+    @PostMapping(
+            value = "/revoke",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<Map<String, String>> revoke(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        authService.revoke(userDetails.getId());
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "All tokens revoked successfully"));
     }
 }

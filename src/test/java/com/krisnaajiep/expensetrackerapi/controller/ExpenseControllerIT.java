@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -33,8 +34,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
-class ExpenseControllerTest {
+class ExpenseControllerIT {
     @Autowired
     private ExpenseRepository expenseRepository;
 
@@ -97,8 +99,6 @@ class ExpenseControllerTest {
                     }
             );
 
-            System.out.printf("Response: %s%n", response);
-
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
             assertEquals("Unauthorized", response.get("message"));
@@ -122,8 +122,6 @@ class ExpenseControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("Response: %s%n", response);
 
             assertNotNull(response);
             assertTrue(response.containsKey("errors"));
@@ -151,8 +149,6 @@ class ExpenseControllerTest {
                     }
             );
 
-            System.out.printf("Response: %s%n", response);
-
             assertNotNull(response);
             assertNotNull(response.getId());
             assertEquals(expenseRequestDto.getDescription(), response.getDescription());
@@ -176,8 +172,6 @@ class ExpenseControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("Response: %s%n", response);
 
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
@@ -203,8 +197,6 @@ class ExpenseControllerTest {
                     }
             );
 
-            System.out.printf("Response: %s%n", response);
-
             assertNotNull(response);
             assertTrue(response.containsKey("errors"));
         });
@@ -228,8 +220,6 @@ class ExpenseControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("Response: %s%n", response);
 
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
@@ -255,8 +245,6 @@ class ExpenseControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("Response: %s%n", response);
 
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
@@ -292,8 +280,6 @@ class ExpenseControllerTest {
                     }
             );
 
-            System.out.printf("Response: %s%n", response);
-
             assertNotNull(response);
             assertEquals(savedExpense.getId(), response.getId());
             assertEquals(expenseRequestDto.getDescription(), response.getDescription());
@@ -315,8 +301,6 @@ class ExpenseControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("Response: %s%n", response);
 
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
@@ -341,8 +325,6 @@ class ExpenseControllerTest {
                     }
             );
 
-            System.out.printf("Response: %s%n", response);
-
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
             assertEquals("Expense not found with ID: " + nonExistentExpenseId, response.get("message"));
@@ -364,8 +346,6 @@ class ExpenseControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("Response: %s%n", response);
 
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
@@ -408,8 +388,6 @@ class ExpenseControllerTest {
                     }
             );
 
-            System.out.printf("Response: %s%n", response);
-
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
             assertEquals("Unauthorized", response.get("message"));
@@ -433,9 +411,6 @@ class ExpenseControllerTest {
             );
 
             assertNotNull(response);
-
-            System.out.printf("Content: %s%n", response.getContent());
-            System.out.printf("Metadata: %s%n", response.getMetadata());
 
             assertFalse(response.getContent().isEmpty());
             assertEquals(5, response.getContent().size());

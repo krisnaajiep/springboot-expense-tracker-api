@@ -23,6 +23,8 @@ import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -43,6 +45,7 @@ import java.time.Instant;
 @RequiredArgsConstructor
 @Transactional
 public class AuthService {
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     /**
      * A repository interface for performing CRUD operations and custom queries on the User entity.
      * This instance is used in the AuthService class to interact with the underlying database to
@@ -75,6 +78,12 @@ public class AuthService {
      */
     private final AuthenticationManager authenticationManager;
 
+    /**
+     * An instance of the AuthConfig class that encapsulates the authentication-related
+     * configuration properties of the application.
+     * This includes settings such as token expiration durations and other
+     * authentication-specific configuration values used throughout the AuthService.
+     */
     private final AuthConfig authConfig;
 
     /**
@@ -155,6 +164,18 @@ public class AuthService {
         refreshToken.setRotatedAt(Instant.now());
 
         return new TokenResponseDto(accessToken, newRefreshToken);
+    }
+
+    /**
+     * Revokes all refresh tokens associated with a specific user by deleting them
+     * from the refresh token repository. This method is typically used during logout
+     * or when the user's access should be invalidated.
+     *
+     * @param userId the unique identifier of the user whose refresh tokens should be revoked
+     */
+    public void revoke(Long userId) {
+        refreshTokenRepository.deleteAllByUserId(userId);
+        log.info("Revoked all refresh tokens for user with id: {}", userId);
     }
 
     /**

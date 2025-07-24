@@ -23,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -34,8 +35,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
-class AuthControllerTest {
+class AuthControllerIT {
     @Autowired
     private UserRepository userRepository;
 
@@ -98,8 +100,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
             assertNotNull(response.get("errors"));
             assertEquals(3, ((Map<?, ?>) response.get("errors")).size());
@@ -136,8 +136,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
             assertNotNull(response.get("message"));
             assertEquals("User with this email already exists", response.get("message"));
@@ -163,8 +161,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("Access Token: %s%n", response.getAccessToken());
-
             assertNotNull(response.getAccessToken());
 
             String accessToken = response.getAccessToken();
@@ -173,13 +169,9 @@ class AuthControllerTest {
 
             String email = jwtUtility.getEmail(accessToken);
 
-            System.out.printf("Email from token: %s%n", email);
-
             assertEquals(registerRequestDto.getEmail(), email);
 
             assertNotNull(response.getRefreshToken());
-
-            System.out.printf("Refresh token: %s%n", response.getRefreshToken());
         });
     }
 
@@ -200,8 +192,6 @@ class AuthControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("response: %s%n", response);
 
             assertNotNull(response);
             assertNotNull(response.get("errors"));
@@ -229,8 +219,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
             assertNotNull(response.get("message"));
             assertEquals("Invalid credentials", response.get("message"));
@@ -244,8 +232,6 @@ class AuthControllerTest {
                 .email(USER_EMAIL)
                 .password(passwordEncoder.encode(USER_PASSWORD))
                 .build();
-
-        System.out.printf("Encoded user password: %s%n", user.getPassword());
 
         userRepository.save(user);
 
@@ -265,8 +251,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("Access Token: %s%n", response.getAccessToken());
-
             assertNotNull(response.getAccessToken());
 
             String accessToken = response.getAccessToken();
@@ -275,13 +259,9 @@ class AuthControllerTest {
 
             String email = jwtUtility.getEmail(accessToken);
 
-            System.out.printf("Email from token: %s%n", email);
-
             assertEquals(loginRequestDto.getEmail(), email);
 
             assertNotNull(response.getRefreshToken());
-
-            System.out.printf("Refresh token: %s%n", response.getRefreshToken());
         });
     }
 
@@ -301,8 +281,6 @@ class AuthControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("response: %s%n", response);
 
             assertNotNull(response);
             assertNotNull(response.get("errors"));
@@ -327,8 +305,6 @@ class AuthControllerTest {
                     new TypeReference<>() {
                     }
             );
-
-            System.out.printf("response: %s%n", response);
 
             assertNotNull(response);
             assertNotNull(response.get("message"));
@@ -355,8 +331,6 @@ class AuthControllerTest {
                     }
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
             assertNotNull(response.get("message"));
             assertEquals("Refresh token expired", response.get("message"));
@@ -381,8 +355,6 @@ class AuthControllerTest {
                     new TypeReference<>() {}
             );
 
-            System.out.printf("response: %s%n", response);
-
             assertNotNull(response);
 
             assertNotNull(response.getAccessToken());
@@ -391,13 +363,32 @@ class AuthControllerTest {
 
             assertNotNull(jwtUtility.getEmail(accessToken));
 
-            String email = jwtUtility.getEmail(accessToken);
-
-            System.out.printf("Email from token: %s%n", email);
-
             assertNotNull(response.getRefreshToken());
+        });
+    }
 
-            System.out.printf("New refresh token: %s%n", response.getRefreshToken());
+    @Test
+    public void testRevokeSuccess() throws Exception {
+        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        setRefreshToken(rawRefreshToken, Instant.now().plusMillis(86400000));
+        refreshTokenRequestDto.setRefreshToken(rawRefreshToken);
+
+        String accessToken = jwtUtility.generateToken(USER_EMAIL, USER_EMAIL);
+
+        mockMvc.perform(post("/revoke")
+                .accept(MediaType.ALL)
+                .header("Authorization", "Bearer " + accessToken)
+        ).andExpect(
+                status().isOk()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {}
+            );
+
+            assertNotNull(response);
+            assertNotNull(response.get("message"));
+            assertEquals("All tokens revoked successfully", response.get("message"));
         });
     }
 
