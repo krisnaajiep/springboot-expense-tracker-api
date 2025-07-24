@@ -78,6 +78,12 @@ public class AuthService {
      */
     private final AuthenticationManager authenticationManager;
 
+    /**
+     * An instance of the AuthConfig class that encapsulates the authentication-related
+     * configuration properties of the application.
+     * This includes settings such as token expiration durations and other
+     * authentication-specific configuration values used throughout the AuthService.
+     */
     private final AuthConfig authConfig;
 
     /**
