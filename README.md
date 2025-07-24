@@ -42,6 +42,7 @@ and user authentication in Spring Boot.
 - **List and filter all past expenses**: Get the list of expenses with pagination and filtering by date range using the
   `GET` method.
 - **Refresh Token**: Get a new access token using the `POST` method.
+- **Revoke Tokens**: Invalidates all refresh tokens for the authenticated user using the `POST` method.
 
 ## Setup
 
@@ -76,19 +77,22 @@ How to install:
    cp .env.example .env
    ```
 
-5. Set environment variables in `.env` for databases and JWT secret configuration
+5. Set environment variables in `.env` for database and JWT secret configuration
 
    ```dotenv
-    DB_HOST=your_database_host
-    DB_PORT=your_database_port
-    DB_NAME=ExpenseTrackerAPI
-    DB_USERNAME=your_database_username
-    DB_PASSWORD=your_database_password
-    JWT_SECRET=your_jwt_secret
+    SPRING_DATASOURCE_URL=jdbc:sqlserver://localhost:1433;databaseName=ExpenseTrackerAPI;encrypt=true;trustServerCertificate=true
+    SPRING_DATASOURCE_USERNAME=<your_database_username>
+    SPRING_DATASOURCE_PASSWORD=<your_database_password>
+    JWT_SECRET=<your_strong_secret>
    ```
 
 6. Build the project
 
+   ```bash
+   ./mvnw clean package
+   ```
+
+   If you want to skip the test:
    ```bash
    ./mvnw clean package -DskipTests
    ```
@@ -96,7 +100,7 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-1.2.1.jar
+   java -jar target/expense-tracker-api-1.3.0.jar
    ```
 
 ## Usage
@@ -119,15 +123,15 @@ Example API Endpoints:
 
     - Example Request:
 
-      ```http
-      POST /register
-      Content-Type: application/json
+      ```http request
+       POST /register
+       Content-Type: application/json
       
-      {
-        "name": "John Doe",
-        "email": "john@doe.com",
-        "password": "example_password",
-      }
+       {
+         "name": "John Doe",
+         "email": "john@doe.com",
+         "password": "example_password",
+       }
       ```
 
     - Response:
@@ -159,14 +163,14 @@ Example API Endpoints:
 
     - Example Request:
 
-      ```http
-      POST /login
-      Content-Type: application/json
+      ```http request
+       POST /login
+       Content-Type: application/json
       
-      {
-        "email": "john@doe.com",
-        "password": "example_password",
-      }
+       {
+         "email": "john@doe.com",
+         "password": "example_password",
+       }
       ```
 
     - Response:
@@ -197,13 +201,13 @@ Example API Endpoints:
 
     - Example Request:
 
-      ```http
-      POST /refresh
-      Content-Type: application/json
+      ```http request
+        POST /refresh
+        Content-Type: application/json
       
-      {
-        "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_refresh"
-      }
+        {
+            "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_refresh"
+        }
       ```
 
     - Response:
@@ -220,7 +224,28 @@ Example API Endpoints:
       }
       ```
 
-4. **Create an expense**
+4. **Revoke Tokens**
+
+    - Method: `POST`
+    - Endpoint: '/revoke'
+    - Request Header:
+
+        - `Authorization` (string)—The access token with `Bearer` type.
+
+    - Response:
+
+        - Status: `200 OK`
+        - Content-Type: `application/json`
+
+    - Example Response:
+
+      ```json
+      {
+        "message": "All tokens revoked successfully"
+      }
+      ```
+
+5. **Create an expense**
 
     - Method: `POST`
     - Endpoint: `/expenses`
@@ -245,17 +270,17 @@ Example API Endpoints:
 
     - Example Request:
 
-      ```http
-      POST /expenses
-      Content-Type: application/json
-      Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access
+      ```http request
+       POST /expenses
+       Content-Type: application/json
+       Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access
       
-      {
-        "description": "Buy milk, eggs, and bread",
-        "amount": 60.00,
-        "date": "2023-10-02",
-        "category": "Groceries"
-      }
+       {
+         "description": "Buy milk, eggs, and bread",
+         "amount": 60.00,
+         "date": "2023-10-02",
+         "category": "Groceries"
+       }
       ```
 
     - Response:
@@ -275,7 +300,7 @@ Example API Endpoints:
       }
       ```
 
-5. **Update an existing expense**
+6. **Update an existing expense**
 
     - Method: `PUT`
     - Endpoint: `/expenses/{id}`
@@ -300,17 +325,17 @@ Example API Endpoints:
 
     - Example Request:
 
-      ```http
-      POST /expenses/1
-      Content-Type: application/json
-      Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access
+      ```http request
+       POST /expenses/1
+       Content-Type: application/json
+       Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access
       
-      {
-       "description": "Buy milk, eggs, bread, and cheese"
-       "amount": 60.00,
-       "date": "2023-10-02",
-       "category": "Groceries"
-      }
+       {
+         "description": "Buy milk, eggs, bread, and cheese"
+         "amount": 60.00,
+         "date": "2023-10-02",
+         "category": "Groceries"
+       }
       ```
 
     - Response:
@@ -330,7 +355,7 @@ Example API Endpoints:
       }
       ```
 
-6. **Delete an existing expense**
+7. **Delete an existing expense**
 
     - Method: `DELETE`
     - Endpoint: `/expenses/{id}`
@@ -342,7 +367,7 @@ Example API Endpoints:
 
         - Status: `204 No Content`
 
-7. **List and filter expenses**
+8. **List and filter expenses**
 
     - Method: `GET`
     - Endpoint: `/expenses`
