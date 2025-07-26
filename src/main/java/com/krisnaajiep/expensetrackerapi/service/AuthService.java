@@ -46,6 +46,7 @@ import java.time.Instant;
 @Transactional
 public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     /**
      * A repository interface for performing CRUD operations and custom queries on the User entity.
      * This instance is used in the AuthService class to interact with the underlying database to
@@ -109,6 +110,8 @@ public class AuthService {
         RefreshToken refreshToken = createRefreshToken(savedUser, rawRefreshToken);
         refreshTokenRepository.save(refreshToken);
 
+        log.info("Registered new user with id: {}", savedUser.getId());
+
         return new TokenResponseDto(accessToken, rawRefreshToken);
     }
 
@@ -133,6 +136,8 @@ public class AuthService {
         String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
         RefreshToken refreshToken = createRefreshToken(userDetails.user(), rawRefreshToken);
         refreshTokenRepository.save(refreshToken);
+
+        log.info("User with email {} logged in", email);
 
         return new TokenResponseDto(accessToken, rawRefreshToken);
     }
@@ -162,6 +167,8 @@ public class AuthService {
         refreshToken.setToken(DigestUtils.sha256Hex(newRefreshToken));
         refreshToken.setExpiryDate(Instant.now().plusMillis(authConfig.getRefreshTokenExpiration()));
         refreshToken.setRotatedAt(Instant.now());
+
+        log.info("Refreshed token for user with id: {}", user.getId());
 
         return new TokenResponseDto(accessToken, newRefreshToken);
     }

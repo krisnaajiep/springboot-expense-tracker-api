@@ -10,6 +10,7 @@ Created on 30/06/25 02.33
 Version 1.0
 */
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -23,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
+@Schema(name = "ExpenseRequest", description = "Expense request body")
 public class ExpenseRequestDto {
     @NotBlank
     @Size(max = 255)

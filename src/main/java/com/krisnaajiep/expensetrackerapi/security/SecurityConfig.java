@@ -1,4 +1,4 @@
-package com.krisnaajiep.expensetrackerapi.config;
+package com.krisnaajiep.expensetrackerapi.security;
 
 /*
 IntelliJ IDEA 2025.1 (Ultimate Edition)
@@ -10,8 +10,6 @@ Created on 27/06/25 03.00
 Version 1.0
 */
 
-import com.krisnaajiep.expensetrackerapi.security.JwtAuthenticationFilter;
-import com.krisnaajiep.expensetrackerapi.security.JwtAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -74,12 +72,16 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless sessions
                 .httpBasic(AbstractHttpConfigurer::disable) // Disable basic authentication
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
+                        .requestMatchers( // Allow access to these endpoints
                                 "/register",
                                 "/login",
                                 "/refresh",
-                                "/actuator/health")
-                        .permitAll() // Allow access to the test endpoint
+                                "/actuator/health",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html")
+                        .permitAll()
                         .anyRequest().authenticated()) // Require authentication for all other requests
                 .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception

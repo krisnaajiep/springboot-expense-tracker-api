@@ -17,6 +17,8 @@ import com.krisnaajiep.expensetrackerapi.mapper.ExpenseMapper;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -36,6 +38,8 @@ import java.time.LocalDate;
 @Service
 @RequiredArgsConstructor
 public class ExpenseService {
+    private static final Logger log = LoggerFactory.getLogger(ExpenseService.class);
+
     /**
      * Repository for managing persistence operations related to the Expense entity.
      * Provides methods to perform CRUD operations and custom queries.
@@ -56,6 +60,8 @@ public class ExpenseService {
     public ExpenseResponseDto save(Expense expense) {
         // Save the entity using expenseRepository
         Expense savedExpense = expenseRepository.save(expense);
+
+        log.info("Saved expense with ID: {}", savedExpense.getId());
 
         // Convert the saved entity back to ExpenseResponseDto and return it
         return ExpenseMapper.toExpenseResponseDto(savedExpense);
@@ -88,6 +94,8 @@ public class ExpenseService {
         existingExpense.setCategory(expense.getCategory());
         existingExpense.setDate(expense.getDate());
 
+        log.info("Updated expense with ID: {}", existingExpense.getId());
+
         // Convert the updated entity back to ExpenseResponseDto and return it
         return ExpenseMapper.toExpenseResponseDto(existingExpense);
     }
@@ -115,6 +123,8 @@ public class ExpenseService {
 
         // Delete the expense
         expenseRepository.delete(existingExpense);
+
+        log.info("Deleted expense with ID: {}", expenseId);
     }
 
     /**
@@ -141,6 +151,8 @@ public class ExpenseService {
 
         // Fetch all expenses for the user with pagination
         Page<Expense> expenses = expenseRepository.findAll(userId, from, to, pageable);
+
+        log.info("Fetched {} expenses for user with ID: {}", expenses.getTotalElements(), userId);
 
         // Convert the Page of Expense entities to a Page of ExpenseResponseDto
         return expenses.map(ExpenseMapper::toExpenseResponseDto);

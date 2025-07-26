@@ -10,11 +10,13 @@ Created on 28/06/25 23.03
 Version 1.0
 */
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
+@Schema(name = "LoginRequest", description = "Login request body")
 public class LoginRequestDto {
     @NotBlank
     @Email
