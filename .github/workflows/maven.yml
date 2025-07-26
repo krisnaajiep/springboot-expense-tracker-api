@@ -49,10 +49,28 @@ jobs:
           LOG_LEVEL: ${{ inputs.logLevel || 'warn' }}
         run: mvn -B verify --file pom.xml
       - run: mkdir staging && cp target/*.jar staging
-      - uses: actions/upload-artifact@v4
+      - name: Upload Package
+        uses: actions/upload-artifact@v4
         with:
           name: Package
           path: staging
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'Test Reports'
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+      - name: Upload OpenAPI Docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'OpenAPI Spec'
+          path: target/openapi.yaml
+      - name: Upload OWASP Dependency-Check Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'OWASP Dependency-Check Report'
+          path: target/dependency-check-report.html
 
       # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
       - name: Update dependency graph
