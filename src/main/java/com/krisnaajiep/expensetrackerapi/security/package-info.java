@@ -2,6 +2,7 @@
  * This package contains security-related components that handle authentication 
  * and authorization for the application. It includes:
  * <ul>
+ *     <li>Security configuration (Spring Security)</li>
  *     <li>JWT token generation and validation</li>
  *     <li>User authentication services</li>
  *     <li>Security filters and configurations</li>

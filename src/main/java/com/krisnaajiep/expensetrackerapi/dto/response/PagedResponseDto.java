@@ -10,6 +10,7 @@ Created on 03/07/25 09.25
 Version 1.0
 */
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.data.web.PagedModel;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
+@Schema(name = "PagedResponse", description = "Paged response body")
 public class PagedResponseDto<T> {
     private List<T> content;
     private PagedModel.PageMetadata metadata;
