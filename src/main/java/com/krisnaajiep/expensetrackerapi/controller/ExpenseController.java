@@ -20,6 +20,7 @@ import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.security.CustomUserDetails;
 import com.krisnaajiep.expensetrackerapi.service.ExpenseService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -124,9 +125,21 @@ public class ExpenseController {
     )
     public ResponseEntity<PagedResponseDto<ExpenseResponseDto>> findAll(
             @AuthenticationPrincipal CustomUserDetails userDetails,
+
+            @Parameter(description = """
+                    The filter type to apply based on the expense date, Available values are:
+                    * `PAST_WEEK` - Expenses from the past week.
+                    * `PAST_MONTH` - Expenses from the past month.
+                    * `LAST_3_MONTHS` - Expenses from the last 3 months.
+                    """)
             @RequestParam(required = false) ExpenseFilter filter,
+
+            @Parameter(description = "The start date for custom expense filtering in the format `yyyy-MM-dd`")
             @RequestParam(required = false) LocalDate from,
+
+            @Parameter(description = "The end date for custom expense filtering in the format `yyyy-MM-dd`")
             @RequestParam(required = false) LocalDate to,
+
             @ParameterObject Pageable pageable
     ) {
         Page<ExpenseResponseDto> expenses = expenseService.findAll(

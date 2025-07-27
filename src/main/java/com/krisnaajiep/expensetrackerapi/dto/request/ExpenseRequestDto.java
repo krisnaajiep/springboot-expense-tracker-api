@@ -28,20 +28,24 @@ import java.time.LocalDate;
 public class ExpenseRequestDto {
     @NotBlank
     @Size(max = 255)
+    @Schema(description = "Expense description", example = "Purchase of new computer")
     private String description;
 
     @NotNull
     @DecimalMin("0.01")
     @Digits(integer = 38, fraction = 2)
+    @Schema(description = "Expense amount", example = "800.00")
     private BigDecimal amount;
 
     @NotBlank
     @Size(max = 20)
     @Pattern(regexp = "^(Groceries|Leisure|Electronics|Utilities|Clothing|Health|Others)$",
              message = "Category must be one of: Groceries, Leisure, Electronics, Utilities, Clothing, Health, Others")
+    @Schema(description = "Expense category", example = "Electronics")
     private String category;
 
     @NotNull
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @Schema(description = "Expense date", example = "2025-06-30")
     private LocalDate date; // Format: YYYY-MM-DD
 }

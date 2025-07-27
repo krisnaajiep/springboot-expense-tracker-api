@@ -20,8 +20,10 @@ import lombok.Data;
 public class LoginRequestDto {
     @NotBlank
     @Email
+    @Schema(description = "User email", example = "john@doe.com")
     private String email;
 
     @NotBlank
+    @Schema(description = "User password")
     private String password;
 }

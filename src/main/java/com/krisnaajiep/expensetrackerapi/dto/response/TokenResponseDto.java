@@ -20,8 +20,10 @@ import lombok.Getter;
 @Schema(name = "TokenResponse", description = "Token response body")
 public class TokenResponseDto {
     @JsonProperty("access-token")
+    @Schema(description = "Access token")
     private String accessToken;
 
     @JsonProperty("refresh-token")
+    @Schema(description = "Refresh token")
     private String refreshToken;
 }

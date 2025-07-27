@@ -21,14 +21,17 @@ import lombok.Data;
 public class RegisterRequestDto {
     @NotBlank
     @Size(max = 255)
+    @Schema(description = "User name", example = "John Doe")
     private String name;
 
     @NotBlank
     @Email
     @Size(max = 255)
+    @Schema(description = "User email", example = "john@doe.com")
     private String email;
 
     @NotBlank
     @Size(max = 255)
+    @Schema(description = "User password")
     private String password;
 }
