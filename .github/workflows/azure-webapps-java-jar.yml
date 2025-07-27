@@ -65,6 +65,7 @@ jobs:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           LOG_LEVEL: ${{ inputs.logLevel || 'warn' }}
+          SPRING_PROFILES_ACTIVE: build
         run: mvn clean install
 
       - name: Upload artifact for deployment job

@@ -47,6 +47,7 @@ jobs:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           LOG_LEVEL: ${{ inputs.logLevel || 'warn' }}
+          SPRING_PROFILES_ACTIVE: build
         run: mvn -B verify --file pom.xml
       - run: mkdir staging && cp target/*.jar staging
       - name: Upload Package
