@@ -10,6 +10,7 @@ Created on 27/06/25 22.57
 Version 1.0
 */
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -67,7 +69,31 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             @NonNull WebRequest request
     ) {
         logger.error("An error occurred while parsing the request body: " + ex.getMessage(), ex);
+
+        if (ex.getRootCause() instanceof InvalidFormatException ifEx) {
+            return handleInvalidFormatException(ifEx);
+        }
+
+        if (ex.getRootCause() instanceof DateTimeParseException dtpEx) {
+            return handleDateTimeParseException(dtpEx);
+        }
+
         return super.handleHttpMessageNotReadable(ex, headers, status, request);
+    }
+
+    private ResponseEntity<Object> handleInvalidFormatException(InvalidFormatException ex) {
+        String message = String.format(
+                "Invalid format for field: %s, Expected type: %s",
+                ex.getPath().getLast().getFieldName(),
+                ex.getTargetType().getSimpleName()
+        );
+
+        return new ResponseEntity<>(Map.of("message", message), HttpStatus.BAD_REQUEST);
+    }
+
+    private ResponseEntity<Object> handleDateTimeParseException(DateTimeParseException ex) {
+        String message = String.format("Invalid date format: %s, Expected format: yyyy-MM-dd", ex.getParsedString());
+        return new ResponseEntity<>(Map.of("message", message), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
