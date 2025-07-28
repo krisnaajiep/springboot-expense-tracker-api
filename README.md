@@ -193,8 +193,8 @@ The API returns the following status codes depending on the success or failure o
 
 Project is: _complete_.
 
-[![CI](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/maven.yml/badge.svg)](https://github.com/username/repo/actions)   
-[![CI](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/azure-webapps-java-jar.yml/badge.svg)](https://github.com/username/repo/actions)
+[![CI](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/maven.yml/badge.svg)](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/maven.yml)   
+[![CD](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/azure-webapps-java-jar.yml/badge.svg)](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/azure-webapps-java-jar.yml)
 
 ## Acknowledgements
 
