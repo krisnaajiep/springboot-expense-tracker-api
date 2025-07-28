@@ -16,10 +16,13 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -31,7 +34,8 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .components(components())
-                .info(info());
+                .info(info())
+                .servers(servers());
     }
 
     private Components components() {
@@ -48,7 +52,11 @@ public class SwaggerConfig {
     private Info info() {
         return new Info()
                 .title(environment.getProperty("spring.application.name"))
-                .description("Simple Expense Tracker RESTful API to allow users to manage their expenses.")
+                .description("""
+                Simple Expense Tracker RESTful API built with Spring Boot to allow users to create, read, update, and delete expenses.
+                
+                [GitHub Repository](https://github.com/krisnaajiep/springboot-expense-tracker-api)
+                """)
                 .version(environment.getProperty("spring.application.version"))
                 .contact(contact())
                 .license(license());
@@ -65,5 +73,12 @@ public class SwaggerConfig {
         return new License()
                 .name("MIT License")
                 .url("https://opensource.org/licenses/MIT");
+    }
+
+    private List<Server> servers() {
+        return List.of(
+                new Server().url("http://localhost:" + environment.getProperty("server.port"))
+                        .description("⚠️ Only for local testing")
+        );
     }
 }
