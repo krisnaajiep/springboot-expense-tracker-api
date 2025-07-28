@@ -21,6 +21,39 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(name = "PagedResponse", description = "Paged response body")
 public class PagedResponseDto<T> {
+    @Schema(
+            description = "List of expenses",
+            example = """
+                    [
+                         {
+                           "id": 1,
+                           "description": "Purchase of new computer",
+                           "amount": 800.00,
+                           "date": "2025-06-30",
+                           "category": "Electronics"
+                         },
+                         {
+                           "id": 2,
+                           "description": "Electricity and internet bill for the office",
+                           "amount": 120.00,
+                           "date": "2025-07-15",
+                           "category": "Utilities"
+                         }
+                    ]
+                    """
+    )
     private List<T> content;
+
+    @Schema(
+            description = "Page metadata",
+            example = """
+                    {
+                      "size": 10,
+                      "number": 0,
+                      "totalElements": 2,
+                      "totalPages": 1
+                    }
+                    """
+    )
     private PagedModel.PageMetadata metadata;
 }

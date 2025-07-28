@@ -20,5 +20,6 @@ import lombok.Data;
 public class RefreshTokenRequestDto {
     @NotBlank
     @JsonProperty("refresh-token")
+    @Schema(description = "Refresh token")
     private String refreshToken;
 }
