@@ -100,37 +100,45 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-1.3.0.jar
+   java -jar target/expense-tracker-api-1.3.1.jar
    ```
 
 ## Usage
 
+### Example Request
+
+1. **Register**
+
+   ```http
+   POST http://localhost:8080/register
+   Content-Type: application/json
+   
+   {
+     "name": "John Doe",
+     "email": "john@doe.com",
+     "password": "<your_secret_password>"
+   }
+   ```
+
+2. **Create a new expense**
+
+   ```http
+   POST http://localhost:8080/expenses
+   Content-Type: application/json
+   Authorization: Bearer <your_access_token>
+   
+   {
+       "description": "Purchase of new computer",
+       "amount": "800",
+       "date": "2025-06-30",
+       "category": "ELECTRONICS"
+   }
+   ```
+
 ### API Documentation
 
-Interactive API documentation is automatically generated using Swagger UI. After starting the application:
-
-```http request
-http://localhost:8080/swagger-ui.html
-```
-
-For raw OpenAPI spec:
-
-```http request
-GET http://localhost:8080/v3/api-docs
-```
-
-### Endpoints
-
-| Endpoint         | Method   | Description                  | Auth Required      |  
-|------------------|----------|------------------------------|--------------------|  
-| `/register`      | `POST`   | Register a new user          | :x:                |  
-| `/login`         | `POST`   | Login user                   | :x:                |  
-| `/refresh`       | `POST`   | Refresh token                | :x:                |  
-| `/revoke`        | `POST`   | Revoke all refresh tokens    | :white_check_mark: |  
-| `/expenses`      | `POST`   | Create a new expense         | :white_check_mark: |
-| `/expenses`      | `GET`    | List and filter all expenses | :white_check_mark: |
-| `/expenses/{id}` | `PUT`    | Update an existing expense   | :white_check_mark: |
-| `/expenses/{id}` | `DELETE` | Delete an existing expense   | :white_check_mark: |
+* [**Swagger UI**](https://krisnaajiep.github.io/springboot-expense-tracker-api/)
+* [**OpenAPI Document**](https://github.com/krisnaajiep/springboot-expense-tracker-api/blob/dev/docs/openapi.yaml)
 
 ## Authentication
 
