@@ -10,6 +10,7 @@ Created on 30/06/25 02.33
 Version 1.0
 */
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -23,23 +24,28 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
+@Schema(name = "ExpenseRequest", description = "Expense request body")
 public class ExpenseRequestDto {
     @NotBlank
     @Size(max = 255)
+    @Schema(description = "Expense description", example = "Purchase of new computer")
     private String description;
 
     @NotNull
     @DecimalMin("0.01")
     @Digits(integer = 38, fraction = 2)
+    @Schema(description = "Expense amount", example = "800.00")
     private BigDecimal amount;
 
     @NotBlank
     @Size(max = 20)
     @Pattern(regexp = "^(Groceries|Leisure|Electronics|Utilities|Clothing|Health|Others)$",
              message = "Category must be one of: Groceries, Leisure, Electronics, Utilities, Clothing, Health, Others")
+    @Schema(description = "Expense category", example = "Electronics")
     private String category;
 
     @NotNull
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @Schema(description = "Expense date", example = "2025-06-30")
     private LocalDate date; // Format: YYYY-MM-DD
 }

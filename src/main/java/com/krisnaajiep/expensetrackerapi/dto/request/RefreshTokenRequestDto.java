@@ -11,12 +11,15 @@ Version 1.0
 */
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
+@Schema(name = "RefreshTokenRequest", description = "Refresh token request body")
 public class RefreshTokenRequestDto {
     @NotBlank
     @JsonProperty("refresh-token")
+    @Schema(description = "Refresh token")
     private String refreshToken;
 }

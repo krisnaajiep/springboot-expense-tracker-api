@@ -10,6 +10,7 @@ Created on 30/06/25 02.50
 Version 1.0
 */
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -18,11 +19,21 @@ import java.time.LocalDate;
 
 @Getter
 @AllArgsConstructor
+@Schema(name = "ExpenseResponse", description = "Expense response body")
 public class ExpenseResponseDto {
+    @Schema(description = "Expenses ID", example = "1")
     private Long id;
+
+    @Schema(description = "Expenses description", example = "Purchase of new computer")
     private String description;
+
+    @Schema(description = "Expenses amount", example = "800.00")
     private BigDecimal amount;
+
+    @Schema(description = "Expenses category", example = "Electronics")
     private String category;
+
+    @Schema(description = "Expenses date", example = "2025-06-30")
     private LocalDate date;
 
     @Override

@@ -10,23 +10,28 @@ Created on 27/06/25 03.23
 Version 1.0
 */
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
+@Schema(name = "RegisterRequest", description = "Register request body")
 public class RegisterRequestDto {
     @NotBlank
     @Size(max = 255)
+    @Schema(description = "User name", example = "John Doe")
     private String name;
 
     @NotBlank
     @Email
     @Size(max = 255)
+    @Schema(description = "User email", example = "john@doe.com")
     private String email;
 
     @NotBlank
     @Size(max = 255)
+    @Schema(description = "User password")
     private String password;
 }

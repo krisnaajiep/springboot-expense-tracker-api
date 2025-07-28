@@ -11,21 +11,19 @@ Version 1.0
 */
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
+@Schema(name = "TokenResponse", description = "Token response body")
 public class TokenResponseDto {
     @JsonProperty("access-token")
+    @Schema(description = "Access token")
     private String accessToken;
 
     @JsonProperty("refresh-token")
+    @Schema(description = "Refresh token")
     private String refreshToken;
-
-//    @JsonProperty("token-type")
-//    private String tokenType;
-//
-//    @JsonProperty("expires-in")
-//    private Long expiresIn;
 }

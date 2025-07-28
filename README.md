@@ -100,327 +100,45 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-1.3.0.jar
+   java -jar target/expense-tracker-api-1.3.1.jar
    ```
 
 ## Usage
 
-Example API Endpoints:
-
-1. **User Registration**
-
-    - Method: `POST`
-    - Endpoint: `/register`
-    - Request Header:
-
-        - `Content-Type` (string)—The content type of request body (must be `application/json`).
-
-    - Request Body:
-
-        - `name` (string)—The name of the user.
-        - `email` (string)—The email address of the user.
-        - `password` (string)—The password of the user account.
-
-    - Example Request:
-
-      ```http request
-       POST /register
-       Content-Type: application/json
-      
-       {
-         "name": "John Doe",
-         "email": "john@doe.com",
-         "password": "example_password",
-       }
-      ```
-
-    - Response:
-
-        - Status: `201 Created`
-        - Content-Type: `application/json`
-
-    - Example Response:
-
-      ```json
-      {
-        "access-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access",
-        "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_refresh"
-      }
-      ```
-
-2. **User Login**
-
-    - Method: `POST`
-    - Endpoint: `/login`
-    - Request Header:
-
-        - `Content-Type` (string)—The content type of request body (must be `application/json`).
-
-    - Request Body:
-
-        - `email` (string)—The email address of the user.
-        - `password` (string)—The password of the user account.
-
-    - Example Request:
-
-      ```http request
-       POST /login
-       Content-Type: application/json
-      
-       {
-         "email": "john@doe.com",
-         "password": "example_password",
-       }
-      ```
-
-    - Response:
-
-        - Status: `200 OK`
-        - Content-Type: `application/json`
-
-    - Example Response:
-
-      ```json
-      {
-        "access-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access",
-        "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_refresh"
-      }
-      ```
-
-3. **Refresh Token**
-
-    - Method: `POST`
-    - Endpoint: `/refresh`
-    - Request Header:
-
-        - `Content-Type` (string)—The content type of request body (must be `application/json`).
-
-    - Request Body:
-
-        - `refresh-token` (string)—The refresh token.
-
-    - Example Request:
-
-      ```http request
-        POST /refresh
-        Content-Type: application/json
-      
-        {
-            "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_refresh"
-        }
-      ```
-
-    - Response:
-
-        - Status: `200 OK`
-        - Content-Type: `application/json`
-
-    - Example Response:
-
-      ```json
-      {
-        "access-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_new_access",
-        "refresh-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_new_refresh"
-      }
-      ```
-
-4. **Revoke Tokens**
-
-    - Method: `POST`
-    - Endpoint: '/revoke'
-    - Request Header:
-
-        - `Authorization` (string)—The access token with `Bearer` type.
-
-    - Response:
-
-        - Status: `200 OK`
-        - Content-Type: `application/json`
-
-    - Example Response:
-
-      ```json
-      {
-        "message": "All tokens revoked successfully"
-      }
-      ```
-
-5. **Create an expense**
-
-    - Method: `POST`
-    - Endpoint: `/expenses`
-    - Request Header:
-
-        - `Content-Type` (string)—The content type of request body (must be `application/json`).
-        - `Authorization` (string)—The access token with `Bearer` type.
-
-    - Request Body:
-
-        - `description` (string)—The description of the expense.
-        - `amount` (number)—The amount spent. Must be positive.
-        - `date` (string)—The date of the expense in yyyy-MM-dd format.
-        - `category` (string)—The category of the expense. Must be one of the allowed values:
-            - `Groceries`
-            - `Leisure`
-            - `Electronics`
-            - `Utilities`
-            - `Clothing`
-            - `Health`
-            - `Others`
-
-    - Example Request:
-
-      ```http request
-       POST /expenses
-       Content-Type: application/json
-       Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access
-      
-       {
-         "description": "Buy milk, eggs, and bread",
-         "amount": 60.00,
-         "date": "2023-10-02",
-         "category": "Groceries"
-       }
-      ```
-
-    - Response:
-
-        - Status: `201 Created`
-        - Content-Type: `application/json`
-
-    - Example Response:
-
-      ```json
-      {
-        "id": 1,
-        "description": "Buy milk, eggs, and bread",
-        "amount": 60.00,
-        "date": "2023-10-02",
-        "category": "Groceries"
-      }
-      ```
-
-6. **Update an existing expense**
-
-    - Method: `PUT`
-    - Endpoint: `/expenses/{id}`
-    - Request Header:
-
-        - `Content-Type` (string)—The content type of request body (must be `application/json`).
-        - `Authorization` (string)—The access token with `Bearer` type.
-
-    - Request Body:
-
-        - `description` (string)—The description of the expense.
-        - `amount` (number)—The amount spent. Must be positive.
-        - `date` (string)—The date of the expense in yyyy-MM-dd format.
-        - `category` (string)—The category of the expense. Must be one of the allowed values:
-            - `Groceries`
-            - `Leisure`
-            - `Electronics`
-            - `Utilities`
-            - `Clothing`
-            - `Health`
-            - `Others`
-
-    - Example Request:
-
-      ```http request
-       POST /expenses/1
-       Content-Type: application/json
-       Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9_access
-      
-       {
-         "description": "Buy milk, eggs, bread, and cheese"
-         "amount": 60.00,
-         "date": "2023-10-02",
-         "category": "Groceries"
-       }
-      ```
-
-    - Response:
-
-        - Status: `200 OK`
-        - Content-Type: `application/json`
-
-    - Example Response:
-
-      ```json
-      {
-        "id": 1,
-        "description": "Buy milk, eggs, bread, and cheese",
-        "amount": 60.00,
-        "date": "2023-10-02",
-        "category": "Groceries"
-      }
-      ```
-
-7. **Delete an existing expense**
-
-    - Method: `DELETE`
-    - Endpoint: `/expenses/{id}`
-    - Request Header:
-
-        - `Authorization` (string)—The access token with `Bearer` type.
-
-    - Response:
-
-        - Status: `204 No Content`
-
-8. **List and filter expenses**
-
-    - Method: `GET`
-    - Endpoint: `/expenses`
-    - Request Header:
-
-        - `Content-Type` (string)—The content type of request body (must be `application/json`).
-        - `Authorization` (string)—The access token with `Bearer` type.
-
-    - Response:
-
-        - Status: `200 OK`
-        - Content-Type: `application/json`
-
-    - Example Response:
-
-      ```json
-      {
-         "content": [
-           {
-             "id": 1,
-             "description": "Buy milk, eggs, bread, and cheese",
-             "amount": 60.00,
-             "date": "2023-10-02",
-             "category": "Groceries"
-           },
-           {
-             "id": 2,
-             "description": "Pay electricity and water bills",
-             "amount": 120.00,
-             "date": "2023-10-03",
-             "category": "Utilities"
-           }
-         ],
-         "page": {
-            "size": 10,
-            "number": 0,
-            "totalElements": 2,
-            "totalPages": 1
-         }
-      }
-      ```
-
-        - Params:
-
-            - `page` - (integer, optional)—The page number to retrieve (default is `0`).
-            - `size` - (integer, optional)—The number of expenses per page (default is `20`).
-            - `sort` - (string, optional)—The sorting criteria in the format `property,asc|desc`.
-            - `filter` - (string, optional)—The filter type to apply based on the expense date. Valid values are:
-                - `past_week` - Expenses from the past week.
-                - `past_month` - Expenses from the past month.
-                - `last_3_months` - Expenses from the last 3 months.
-            - `from` - (string, optional)—The start date for custom expense filtering in the format `yyyy-MM-dd`.
-            - `to` - (string, optional)—The end date for custom expense filtering in the format `yyyy-MM-dd`.
+### Example Request
+
+1. **Register**
+
+   ```http
+   POST http://localhost:8080/register
+   Content-Type: application/json
+   
+   {
+     "name": "John Doe",
+     "email": "john@doe.com",
+     "password": "<your_secret_password>"
+   }
+   ```
+
+2. **Create a new expense**
+
+   ```http
+   POST http://localhost:8080/expenses
+   Content-Type: application/json
+   Authorization: Bearer <your_access_token>
+   
+   {
+       "description": "Purchase of new computer",
+       "amount": "800",
+       "date": "2025-06-30",
+       "category": "ELECTRONICS"
+   }
+   ```
+
+### API Documentation
+
+* [**Swagger UI**](https://krisnaajiep.github.io/springboot-expense-tracker-api/)
+* [**OpenAPI Document**](https://github.com/krisnaajiep/springboot-expense-tracker-api/blob/dev/docs/openapi.yaml)
 
 ## Authentication
 
@@ -475,7 +193,8 @@ The API returns the following status codes depending on the success or failure o
 
 Project is: _complete_.
 
-[![CI](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/maven.yml/badge.svg)](https://github.com/username/repo/actions)
+[![CI](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/maven.yml/badge.svg)](https://github.com/username/repo/actions)   
+[![CI](https://github.com/krisnaajiep/springboot-expense-tracker-api/actions/workflows/azure-webapps-java-jar.yml/badge.svg)](https://github.com/username/repo/actions)
 
 ## Acknowledgements
 
@@ -483,4 +202,4 @@ This project was inspired by [roadmap.sh](https://roadmap.sh/projects/expense-tr
 
 ## License
 
-This project is licensed under the MIT License—see the [LICENSE](./LICENSE) file for details.
+This project is licensed under the MIT License—see the [LICENSE](/LICENSE) file for details.
