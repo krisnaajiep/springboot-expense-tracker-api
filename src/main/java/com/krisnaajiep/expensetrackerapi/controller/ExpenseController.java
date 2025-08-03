@@ -29,9 +29,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -142,18 +140,14 @@ public class ExpenseController {
 
             @ParameterObject Pageable pageable
     ) {
-        Page<ExpenseResponseDto> expenses = expenseService.findAll(
-                userDetails.getId(), filter, from, to, pageable
+        PagedResponseDto<ExpenseResponseDto> pagedResponseDto = expenseService.findAll(
+                userDetails.getId(),
+                filter,
+                from,
+                to,
+                pageable
         );
 
-        return ResponseEntity.ok(new PagedResponseDto<>(
-                expenses.getContent(),
-                new PagedModel.PageMetadata(
-                        expenses.getSize(),
-                        expenses.getNumber(),
-                        expenses.getTotalElements(),
-                        expenses.getTotalPages()
-                )
-        ));
+        return ResponseEntity.ok(pagedResponseDto);
     }
 }

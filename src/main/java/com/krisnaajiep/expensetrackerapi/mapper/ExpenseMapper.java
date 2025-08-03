@@ -12,8 +12,11 @@ Version 1.0
 
 import com.krisnaajiep.expensetrackerapi.dto.request.ExpenseRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseResponseDto;
+import com.krisnaajiep.expensetrackerapi.dto.response.PagedResponseDto;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 
 public class ExpenseMapper {
     public static Expense toExpense(User user, ExpenseRequestDto expenseRequestDto) {
@@ -34,5 +37,16 @@ public class ExpenseMapper {
                 expense.getCategory().getDisplayName(),
                 expense.getDate()
         );
+    }
+
+    public static PagedResponseDto<ExpenseResponseDto> toPagedResponseDto(Page<ExpenseResponseDto> page) {
+        PagedModel.PageMetadata metadata = new PagedModel.PageMetadata(
+                page.getSize(),
+                page.getNumber(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+
+        return new PagedResponseDto<>(page.getContent(), metadata);
     }
 }
