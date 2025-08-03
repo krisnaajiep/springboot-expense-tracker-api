@@ -1,22 +1,22 @@
 package com.krisnaajiep.expensetrackerapi.service;
 
 import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseResponseDto;
+import com.krisnaajiep.expensetrackerapi.dto.response.PagedResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,6 +33,9 @@ import static org.mockito.Mockito.*;
 class ExpenseServiceTest {
     @Mock
     private ExpenseRepository expenseRepository;
+
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
 
     @InjectMocks
     private ExpenseService expenseService;
@@ -55,13 +59,10 @@ class ExpenseServiceTest {
         expense.setUser(user);
     }
 
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
-    void testSaveSuccess() {
+    void testSave_Success() {
         when(expenseRepository.save(expense)).thenReturn(expense);
+        when(redisTemplate.keys(anyString())).thenReturn(Set.of());
 
         ExpenseResponseDto response = expenseService.save(expense);
 
@@ -76,7 +77,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    void testUpdateFailure_ExpenseNotFound() {
+    void testUpdate_NotFound() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> expenseService.update(expense.getId(), expense));
@@ -86,7 +87,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    void testUpdateFailure_AccessDenied() {
+    void testUpdate_AccessDenied() {
         User anotherUser = User.builder()
                 .id(2L)
                 .email("jane@doe")
@@ -114,6 +115,7 @@ class ExpenseServiceTest {
     @Test
     void testUpdateSuccess() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+        when(redisTemplate.keys(anyString())).thenReturn(Set.of());
 
         ExpenseResponseDto response = expenseService.update(expense.getId(), expense);
 
@@ -128,7 +130,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    void testDeleteFailure_ExpenseNotFound() {
+    void testDelete_NotFound() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> expenseService.delete(user.getId(), expense.getId()));
@@ -137,7 +139,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    void testDeleteFailure_AccessDenied() {
+    void testDelete_AccessDenied() {
         User anotherUser = User.builder()
                 .id(2L)
                 .email("jane@doe")
@@ -155,6 +157,7 @@ class ExpenseServiceTest {
     @Test
     void testDeleteSuccess() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+        when(redisTemplate.keys(anyString())).thenReturn(Set.of());
 
         expenseService.delete(user.getId(), expense.getId());
 
@@ -164,7 +167,7 @@ class ExpenseServiceTest {
     }
 
     @Test
-    void testFindAllSuccess() {
+    void testFindAll_Success() {
         setExpenses();
 
         int pageNumber = 1; // 0-based index
@@ -175,7 +178,7 @@ class ExpenseServiceTest {
                 new PageImpl<>(expenses, pageable, expenses.size())
         );
 
-        Page<ExpenseResponseDto> response = expenseService.findAll(
+        PagedResponseDto<ExpenseResponseDto> response = expenseService.findAll(
                 user.getId(),
                 null,
                 null,
@@ -186,10 +189,10 @@ class ExpenseServiceTest {
         long expectedTotalPages = (long) Math.ceil((double) expenses.size() / pageSize);
 
         assertNotNull(response);
-        assertEquals(expenses.size(), response.getTotalElements());
-        assertEquals(pageSize, response.getSize());
-        assertEquals(expectedTotalPages, response.getTotalPages());
-        assertEquals(pageNumber, response.getNumber());
+        assertEquals(expenses.size(), response.getMetadata().totalElements());
+        assertEquals(pageSize, response.getMetadata().size());
+        assertEquals(expectedTotalPages, response.getMetadata().totalPages());
+        assertEquals(pageNumber, response.getMetadata().number());
         assertEquals(expenses.size(), response.getContent().size());
 
         for (int i = 0; i < expenses.size(); i++) {
