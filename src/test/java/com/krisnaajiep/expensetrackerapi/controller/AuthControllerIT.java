@@ -77,7 +77,7 @@ class AuthControllerIT {
     }
 
     @Test
-    void testRegister_BadRequest() throws Exception {
+    void testRegister_ValidationErrors() throws Exception {
         registerRequestDto.setName("");
         registerRequestDto.setEmail("john.com");
         registerRequestDto.setPassword(null);
@@ -171,7 +171,7 @@ class AuthControllerIT {
     }
 
     @Test
-    void testLogin_BadRequest() throws Exception {
+    void testLogin_ValidationErrors() throws Exception {
         loginRequestDto.setEmail("john.com");
         loginRequestDto.setPassword(null);
 

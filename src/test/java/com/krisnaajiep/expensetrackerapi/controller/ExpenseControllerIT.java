@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,6 +60,7 @@ class ExpenseControllerIT {
     private String accessToken;
 
     private final ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto();
+    private final Map<String, Object> invalidExpenseRequest = new HashMap<>();
     private final List<Expense> expenses = new ArrayList<>();
 
     @BeforeEach
@@ -101,13 +103,13 @@ class ExpenseControllerIT {
     }
 
     @Test
-    void testSave_BadRequest() throws Exception {
+    void testSave_ValidationErrors() throws Exception {
         setInvalidExpenseRequest(); // Set up an invalid expense request
 
         mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
-                .content(objectMapper.writeValueAsString(expenseRequestDto))
+                .content(objectMapper.writeValueAsString(invalidExpenseRequest))
                 .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
         ).andExpect(
                 status().isBadRequest()
@@ -120,6 +122,34 @@ class ExpenseControllerIT {
 
             assertNotNull(response);
             assertTrue(response.containsKey("errors"));
+        });
+    }
+
+    @Test
+    void testSave_InvalidAmountFormat() throws Exception {
+        setInvalidExpenseRequest(); // Set up an invalid expense request
+        invalidExpenseRequest.put("amount", "Invalid amount format");
+
+        mockMvc.perform(post("/expenses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.ALL)
+                .content(objectMapper.writeValueAsString(invalidExpenseRequest))
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isBadRequest()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals(
+                    "Invalid format for field: amount, Expected type: BigDecimal",
+                    response.get("message")
+            );
         });
     }
 
@@ -175,13 +205,13 @@ class ExpenseControllerIT {
     }
 
     @Test
-    void testUpdate_BadRequest() throws Exception {
+    void testUpdate_ValidationErrors() throws Exception {
         setInvalidExpenseRequest(); // Set up an invalid expense request for updating
 
         mockMvc.perform(put("/expenses/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
-                .content(objectMapper.writeValueAsString(expenseRequestDto))
+                .content(objectMapper.writeValueAsString(invalidExpenseRequest))
                 .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
         ).andExpect(
                 status().isBadRequest()
@@ -194,6 +224,34 @@ class ExpenseControllerIT {
 
             assertNotNull(response);
             assertTrue(response.containsKey("errors"));
+        });
+    }
+
+    @Test
+    void testUpdate_InvalidDateFormat() throws Exception {
+        setInvalidExpenseRequest(); // Set up an invalid expense request for updating
+        invalidExpenseRequest.put("date", "Invalid date format");
+
+        mockMvc.perform(put("/expenses/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.ALL)
+                .content(objectMapper.writeValueAsString(invalidExpenseRequest))
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isBadRequest()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals(
+                    "Invalid date format: Invalid date format, Expected format: yyyy-MM-dd",
+                    response.get("message")
+            );
         });
     }
 
@@ -423,10 +481,10 @@ class ExpenseControllerIT {
     }
 
     private void setInvalidExpenseRequest() {
-        expenseRequestDto.setDescription("");
-        expenseRequestDto.setCategory("");
-        expenseRequestDto.setAmount(new BigDecimal("100.125")); // Invalid amount with more than 2 decimal places
-        expenseRequestDto.setDate(null);
+        invalidExpenseRequest.put("description", null);
+        invalidExpenseRequest.put("category", "Invalid category");
+        invalidExpenseRequest.put("amount", new BigDecimal(-100));
+        invalidExpenseRequest.put("date", null);
     }
 
     private void setUpdateExpenseRequest() {
