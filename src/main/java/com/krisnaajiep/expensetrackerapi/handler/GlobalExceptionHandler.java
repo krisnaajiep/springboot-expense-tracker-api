@@ -68,8 +68,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             @NonNull HttpStatusCode status,
             @NonNull WebRequest request
     ) {
-        logger.error("An error occurred while parsing the request body: " + ex.getMessage(), ex);
-
         if (ex.getRootCause() instanceof InvalidFormatException ifEx) {
             return handleInvalidFormatException(ifEx);
         }
@@ -77,6 +75,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         if (ex.getRootCause() instanceof DateTimeParseException dtpEx) {
             return handleDateTimeParseException(dtpEx);
         }
+
+        logger.error("An error occurred while parsing the request body: " + ex.getMessage(), ex);
 
         return super.handleHttpMessageNotReadable(ex, headers, status, request);
     }
