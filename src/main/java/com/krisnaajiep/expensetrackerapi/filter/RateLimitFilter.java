@@ -40,6 +40,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         capacity = properties.getCapacity();
         refillAmount = properties.getRefillAmount();
         refillDuration = Duration.ofMillis(properties.getRefillDuration());
+
+        logger.info("Rate limit capacity: " + capacity);
+        logger.info("Rate limit refill amount: " + refillAmount);
+        logger.info("Rate limit refill duration: " + properties.getRefillDuration() + " ms");
     }
 
     private Bucket createBucket(String clientIp) {

@@ -39,6 +39,10 @@ public class ThrottlingFilter extends OncePerRequestFilter {
         capacity = properties.getCapacity();
         refillAmount = properties.getRefillAmount();
         refillDuration = Duration.ofMillis(properties.getRefillDuration());
+
+        logger.info("Throttling capacity: " + capacity);
+        logger.info("Throttling refill amount: " + refillAmount);
+        logger.info("Throttling refill duration: " + properties.getRefillDuration() + " ms");
     }
 
     private BlockingBucket createBucket(String clientIp) {
