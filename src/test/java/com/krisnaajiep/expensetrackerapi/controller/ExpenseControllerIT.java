@@ -12,7 +12,6 @@ import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,6 +60,7 @@ class ExpenseControllerIT {
     private String accessToken;
 
     private final ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto();
+    private final Map<String, Object> invalidExpenseRequest = new HashMap<>();
     private final List<Expense> expenses = new ArrayList<>();
 
     @BeforeEach
@@ -80,12 +81,8 @@ class ExpenseControllerIT {
         accessToken = jwtUtility.generateToken(user.getId().toString(), user.getEmail());
     }
 
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
-    void testSaveExpenseUnauthorized() throws Exception {
+    void testSave_Unauthorized() throws Exception {
         mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
@@ -106,13 +103,13 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testSaveExpenseBadRequest() throws Exception {
+    void testSave_ValidationErrors() throws Exception {
         setInvalidExpenseRequest(); // Set up an invalid expense request
 
         mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
-                .content(objectMapper.writeValueAsString(expenseRequestDto))
+                .content(objectMapper.writeValueAsString(invalidExpenseRequest))
                 .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
         ).andExpect(
                 status().isBadRequest()
@@ -129,7 +126,35 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testSaveExpenseSuccess() throws Exception {
+    void testSave_InvalidAmountFormat() throws Exception {
+        setInvalidExpenseRequest(); // Set up an invalid expense request
+        invalidExpenseRequest.put("amount", "Invalid amount format");
+
+        mockMvc.perform(post("/expenses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.ALL)
+                .content(objectMapper.writeValueAsString(invalidExpenseRequest))
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isBadRequest()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals(
+                    "Invalid format for field: amount, Expected type: BigDecimal",
+                    response.get("message")
+            );
+        });
+    }
+
+    @Test
+    void testSave_Success() throws Exception {
         expenseRequestDto.setDescription("Weekly grocery shopping");
         expenseRequestDto.setCategory("Groceries");
         expenseRequestDto.setAmount(new BigDecimal("150.00"));
@@ -159,7 +184,7 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testUpdateExpenseUnauthorized() throws Exception {
+    void testUpdate_Unauthorized() throws Exception {
         mockMvc.perform(post("/expenses/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
@@ -180,13 +205,13 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testUpdateExpenseBadRequest() throws Exception {
+    void testUpdate_ValidationErrors() throws Exception {
         setInvalidExpenseRequest(); // Set up an invalid expense request for updating
 
         mockMvc.perform(put("/expenses/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
-                .content(objectMapper.writeValueAsString(expenseRequestDto))
+                .content(objectMapper.writeValueAsString(invalidExpenseRequest))
                 .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
         ).andExpect(
                 status().isBadRequest()
@@ -203,7 +228,35 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testUpdateExpenseNotFound() throws Exception {
+    void testUpdate_InvalidDateFormat() throws Exception {
+        setInvalidExpenseRequest(); // Set up an invalid expense request for updating
+        invalidExpenseRequest.put("date", "Invalid date format");
+
+        mockMvc.perform(put("/expenses/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.ALL)
+                .content(objectMapper.writeValueAsString(invalidExpenseRequest))
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isBadRequest()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals(
+                    "Invalid date format: Invalid date format, Expected format: yyyy-MM-dd",
+                    response.get("message")
+            );
+        });
+    }
+
+    @Test
+    void testUpdate_NotFound() throws Exception {
         setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
         long nonExistentExpenseId = 999L; // Assuming expense with ID 999 does not exist
 
@@ -228,7 +281,7 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testUpdateExpenseForbidden() throws Exception {
+    void testUpdate_Forbidden() throws Exception {
         setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
         setAnotherExpense(); // Set up another expense for a different user
 
@@ -253,7 +306,7 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testUpdateExpenseSuccess() throws Exception {
+    void testUpdate_Success() throws Exception {
         setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
 
         Expense expense = Expense.builder()
@@ -290,7 +343,7 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testDeleteExpenseUnauthorized() throws Exception {
+    void testDelete_Unauthorized() throws Exception {
         mockMvc.perform(delete("/expenses/1")
                 .accept(MediaType.ALL)
         ).andExpect(
@@ -309,7 +362,7 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testDeleteExpenseNotFound() throws Exception {
+    void testDelete_NotFound() throws Exception {
         // Assuming expense with ID 999 does not exist
         long nonExistentExpenseId = 999L;
 
@@ -332,7 +385,7 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testDeleteExpenseForbidden() throws Exception {
+    void testDelete_Forbidden() throws Exception {
         setAnotherExpense(); // Set up another expense for a different user
 
         mockMvc.perform(delete("/expenses/" + anotherExpense.getId())
@@ -354,7 +407,7 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testDeleteExpenseSuccess() throws Exception {
+    void testDelete_Success() throws Exception {
         Expense expense = Expense.builder()
                 .description("Expense to be deleted")
                 .category(Expense.Category.fromDisplayName("Clothing"))
@@ -376,7 +429,7 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testFindAllExpensesUnauthorized() throws Exception {
+    void testFindAll_Unauthorized() throws Exception {
         mockMvc.perform(get("/expenses")
                 .accept(MediaType.APPLICATION_JSON)
         ).andExpect(
@@ -395,7 +448,7 @@ class ExpenseControllerIT {
     }
 
     @Test
-    public void testFindAllExpensesSuccess() throws Exception {
+    void testFindAll_Success() throws Exception {
         setExpenses();
 
         mockMvc.perform(get("/expenses?page=1&size=15&filter=past_week")
@@ -428,10 +481,10 @@ class ExpenseControllerIT {
     }
 
     private void setInvalidExpenseRequest() {
-        expenseRequestDto.setDescription("");
-        expenseRequestDto.setCategory("");
-        expenseRequestDto.setAmount(new BigDecimal("100.125")); // Invalid amount with more than 2 decimal places
-        expenseRequestDto.setDate(null);
+        invalidExpenseRequest.put("description", null);
+        invalidExpenseRequest.put("category", "Invalid category");
+        invalidExpenseRequest.put("amount", new BigDecimal(-100));
+        invalidExpenseRequest.put("date", null);
     }
 
     private void setUpdateExpenseRequest() {

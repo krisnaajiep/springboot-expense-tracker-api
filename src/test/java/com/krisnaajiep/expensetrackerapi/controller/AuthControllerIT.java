@@ -14,7 +14,6 @@ import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,12 +76,8 @@ class AuthControllerIT {
         passwordEncoder = new BCryptPasswordEncoder();
     }
 
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
-    void testRegisterBadRequest() throws Exception {
+    void testRegister_ValidationErrors() throws Exception {
         registerRequestDto.setName("");
         registerRequestDto.setEmail("john.com");
         registerRequestDto.setPassword(null);
@@ -110,7 +105,7 @@ class AuthControllerIT {
     }
 
     @Test
-    void testRegisterConflict() throws Exception {
+    void testRegister_Conflict() throws Exception {
         User user = User.builder()
                 .name(USER_NAME)
                 .email(USER_EMAIL)
@@ -143,7 +138,7 @@ class AuthControllerIT {
     }
 
     @Test
-    void testRegisterSuccess() throws Exception {
+    void testRegister_Success() throws Exception {
         registerRequestDto.setName(USER_NAME);
         registerRequestDto.setEmail(USER_EMAIL);
         registerRequestDto.setPassword(passwordEncoder.encode(USER_PASSWORD));
@@ -176,7 +171,7 @@ class AuthControllerIT {
     }
 
     @Test
-    void testLoginBadRequest() throws Exception {
+    void testLogin_ValidationErrors() throws Exception {
         loginRequestDto.setEmail("john.com");
         loginRequestDto.setPassword(null);
 
@@ -202,7 +197,7 @@ class AuthControllerIT {
     }
 
     @Test
-    void testLoginUnauthenticated() throws Exception {
+    void testLogin_Unauthenticated() throws Exception {
         loginRequestDto.setEmail(USER_EMAIL);
         loginRequestDto.setPassword(USER_PASSWORD);
 
@@ -226,7 +221,7 @@ class AuthControllerIT {
     }
 
     @Test
-    void testLoginSuccess() throws Exception {
+    void testLogin_Success() throws Exception {
         User user = User.builder()
                 .name(USER_NAME)
                 .email(USER_EMAIL)
@@ -266,7 +261,7 @@ class AuthControllerIT {
     }
 
     @Test
-    public void testRefreshBadRequest() throws Exception {
+    void testRefresh_BadRequest() throws Exception {
         refreshTokenRequestDto.setRefreshToken(null);
 
         mockMvc.perform(post("/refresh")
@@ -290,7 +285,7 @@ class AuthControllerIT {
     }
 
     @Test
-    public void testRefreshNotFound() throws Exception {
+    void testRefresh_NotFound() throws Exception {
         refreshTokenRequestDto.setRefreshToken("invalid refresh token");
 
         mockMvc.perform(post("/refresh")
@@ -313,7 +308,7 @@ class AuthControllerIT {
     }
 
     @Test
-    public void testRefreshExpired() throws Exception {
+    void testRefresh_Expired() throws Exception {
         String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
         setRefreshToken(rawRefreshToken, Instant.now().minusSeconds(3600));
         refreshTokenRequestDto.setRefreshToken(rawRefreshToken);
@@ -338,7 +333,7 @@ class AuthControllerIT {
     }
 
     @Test
-    public void testRefreshSuccess() throws Exception {
+    void testRefresh_Success() throws Exception {
         String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
         setRefreshToken(rawRefreshToken, Instant.now().plusMillis(86400000));
         refreshTokenRequestDto.setRefreshToken(rawRefreshToken);
@@ -368,7 +363,7 @@ class AuthControllerIT {
     }
 
     @Test
-    public void testRevokeSuccess() throws Exception {
+    void testRevoke_Success() throws Exception {
         String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
         setRefreshToken(rawRefreshToken, Instant.now().plusMillis(86400000));
         refreshTokenRequestDto.setRefreshToken(rawRefreshToken);

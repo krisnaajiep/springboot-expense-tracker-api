@@ -1,6 +1,6 @@
 package com.krisnaajiep.expensetrackerapi.service;
 
-import com.krisnaajiep.expensetrackerapi.config.AuthConfig;
+import com.krisnaajiep.expensetrackerapi.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
@@ -12,7 +12,6 @@ import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +53,7 @@ class AuthServiceTest {
     private CustomUserDetails userDetails;
 
     @Mock
-    private AuthConfig authConfig;
+    private AuthProperties authProperties;
 
     @InjectMocks
     private AuthService authService;
@@ -81,17 +80,13 @@ class AuthServiceTest {
         refreshToken.setExpiryDate(Instant.now().plusMillis(86400000));
     }
 
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
-    void testRegisterSuccess() {
+    void testRegister_Success() {
         when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
         when(passwordEncoder.encode(user.getPassword())).thenReturn(ENCODED_PASSWORD);
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
-        when(authConfig.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
+        when(authProperties.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
 
         TokenResponseDto tokenResponseDto = authService.register(user);
 
@@ -105,7 +100,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void testRegisterFailure_EmailExists() {
+    void testRegister_EmailAlreadyExists() {
         when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
 
         ConflictException exception = assertThrows(
@@ -120,14 +115,14 @@ class AuthServiceTest {
     }
 
     @Test
-    void testLoginSuccess() {
+    void testLogin_Success() {
         when(authenticationManager.authenticate(any(Authentication.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
         when(userDetails.getId()).thenReturn(user.getId());
         when(userDetails.getUsername()).thenReturn(user.getEmail());
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
-        when(authConfig.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
+        when(authProperties.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
 
         TokenResponseDto tokenResponseDto = authService.login(user.getEmail(), PASSWORD);
 
@@ -144,7 +139,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void testLoginFailure_InvalidCredentials() {
+    void testLogin_InvalidCredentials() {
         when(authenticationManager.authenticate(any(Authentication.class)))
                 .thenThrow(BadCredentialsException.class);
 
@@ -158,10 +153,10 @@ class AuthServiceTest {
     }
 
     @Test
-    void testRefreshSuccess() {
+    void testRefresh_Success() {
         when(refreshTokenRepository.findByToken(ENCODED_REFRESH_TOKEN)).thenReturn(Optional.of(refreshToken));
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
-        when(authConfig.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
+        when(authProperties.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
 
         TokenResponseDto tokenResponseDto = authService.refreshToken(REFRESH_TOKEN);
 
@@ -174,7 +169,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void testRefreshFailure_RefreshTokenNotFound() {
+    void testRefresh_NotFound() {
         when(refreshTokenRepository.findByToken(ENCODED_REFRESH_TOKEN)).thenThrow(UnauthorizedException.class);
 
         assertThrows(UnauthorizedException.class, () -> authService.refreshToken(REFRESH_TOKEN));
@@ -184,7 +179,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void testRefreshFailure_RefreshTokenExpired() {
+    void testRefresh_Expired() {
         refreshToken.setExpiryDate(Instant.now().minusMillis(86400000));
         when(refreshTokenRepository.findByToken(ENCODED_REFRESH_TOKEN)).thenReturn(Optional.of(refreshToken));
 

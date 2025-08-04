@@ -24,7 +24,7 @@ import org.springframework.validation.annotation.Validated;
 @Setter
 @Getter
 @Validated
-public class AuthConfig {
+public class AuthProperties {
     @NotBlank
     @Size(min = 32, max = 512)
     private String jwtSecret;
