@@ -72,6 +72,11 @@ jobs:
         with:
           name: openapi-spec
           path: target/openapi.yaml
+      - name: Upload Code Coverage Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-reports
+          path: target/site/jacoco/
       - name: Upload OWASP Dependency-Check Report
         uses: actions/upload-artifact@v4
         with:
