@@ -10,7 +10,7 @@ Created on 27/06/25 02.53
 Version 1.0
 */
 
-import com.krisnaajiep.expensetrackerapi.config.AuthConfig;
+import com.krisnaajiep.expensetrackerapi.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
@@ -80,12 +80,12 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     /**
-     * An instance of the AuthConfig class that encapsulates the authentication-related
+     * An instance of the AuthProperties class that encapsulates the authentication-related
      * configuration properties of the application.
      * This includes settings such as token expiration durations and other
      * authentication-specific configuration values used throughout the AuthService.
      */
-    private final AuthConfig authConfig;
+    private final AuthProperties authProperties;
 
     /**
      * Registers a new user into the system. If a user with the same email already exists,
@@ -165,7 +165,7 @@ public class AuthService {
 
         String newRefreshToken = SecureRandomUtility.generateRandomString(32);
         refreshToken.setToken(DigestUtils.sha256Hex(newRefreshToken));
-        refreshToken.setExpiryDate(Instant.now().plusMillis(authConfig.getRefreshTokenExpiration()));
+        refreshToken.setExpiryDate(Instant.now().plusMillis(authProperties.getRefreshTokenExpiration()));
         refreshToken.setRotatedAt(Instant.now());
 
         log.info("Refreshed token for user with id: {}", user.getId());
@@ -198,7 +198,7 @@ public class AuthService {
         return RefreshToken.builder()
                 .user(user)
                 .token(DigestUtils.sha256Hex(token))
-                .expiryDate(Instant.now().plusMillis(authConfig.getRefreshTokenExpiration()))
+                .expiryDate(Instant.now().plusMillis(authProperties.getRefreshTokenExpiration()))
                 .build();
     }
 }

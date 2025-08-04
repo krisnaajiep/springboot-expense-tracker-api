@@ -10,7 +10,7 @@ Created on 07/07/25 13.12
 Version 1.0
 */
 
-import com.krisnaajiep.expensetrackerapi.config.ThrottlingConfig;
+import com.krisnaajiep.expensetrackerapi.config.ThrottlingProperties;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.BlockingBucket;
 import io.github.bucket4j.Bucket;
@@ -35,10 +35,10 @@ public class ThrottlingFilter extends OncePerRequestFilter {
     private final long refillAmount;
     private final Duration refillDuration;
 
-    public ThrottlingFilter(ThrottlingConfig config) {
-        capacity = config.getCapacity();
-        refillAmount = config.getRefillAmount();
-        refillDuration = Duration.ofMillis(config.getRefillDuration());
+    public ThrottlingFilter(ThrottlingProperties properties) {
+        capacity = properties.getCapacity();
+        refillAmount = properties.getRefillAmount();
+        refillDuration = Duration.ofMillis(properties.getRefillDuration());
     }
 
     private BlockingBucket createBucket(String clientIp) {

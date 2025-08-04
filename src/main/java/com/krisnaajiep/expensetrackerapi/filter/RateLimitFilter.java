@@ -10,7 +10,7 @@ Created on 06/07/25 22.07
 Version 1.0
 */
 
-import com.krisnaajiep.expensetrackerapi.config.RateLimitConfig;
+import com.krisnaajiep.expensetrackerapi.config.RateLimitProperties;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
@@ -36,10 +36,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final long refillAmount;
     private final Duration refillDuration;
 
-    public RateLimitFilter(RateLimitConfig config) {
-        capacity = config.getCapacity();
-        refillAmount = config.getRefillAmount();
-        refillDuration = Duration.ofMillis(config.getRefillDuration());
+    public RateLimitFilter(RateLimitProperties properties) {
+        capacity = properties.getCapacity();
+        refillAmount = properties.getRefillAmount();
+        refillDuration = Duration.ofMillis(properties.getRefillDuration());
     }
 
     private Bucket createBucket(String clientIp) {
