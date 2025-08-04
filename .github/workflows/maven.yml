@@ -49,6 +49,11 @@ jobs:
           LOG_LEVEL: ${{ inputs.logLevel || 'warn' }}
           SPRING_PROFILES_ACTIVE: build
         run: mvn -B verify --file pom.xml
+      - name: Upload Log File
+        uses: actions/upload-artifact@v4
+        with:
+          name: spring-log
+          path: var/log/spring.log
       - run: mkdir staging && cp target/*.jar staging
       - name: Upload Package
         uses: actions/upload-artifact@v4
