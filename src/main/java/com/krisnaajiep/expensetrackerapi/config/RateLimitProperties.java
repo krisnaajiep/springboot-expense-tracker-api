@@ -5,8 +5,8 @@ IntelliJ IDEA 2025.1 (Ultimate Edition)
 Build #IU-251.23774.435, built on April 14, 2025
 @Author krisna a.k.a. Krisna Ajie
 Java Developer
-Created on 07/07/25 13.39
-@Last Modified 07/07/25 13.39
+Created on 07/07/25 12.47
+@Last Modified 07/07/25 12.47
 Version 1.0
 */
 
@@ -18,11 +18,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 @Component
-@ConfigurationProperties("throttling")
+@ConfigurationProperties(prefix = "rate-limit")
 @Setter
 @Getter
 @Validated
-public class ThrottlingConfig {
+public class RateLimitProperties {
     @Positive
     private long capacity;
 
