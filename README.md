@@ -1,5 +1,9 @@
 # Spring Boot Expense Tracker API
 
+![Current Version](https://img.shields.io/badge/version-1.4.0-green)
+[![Framework](https://img.shields.io/badge/framework-Spring_Boot-6DB33F?logo=springboot&logoColor=white)](https://spring.io/)
+[![Redis](https://img.shields.io/badge/cache-Redis-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+
 > Simple Expense Tracker RESTful API built with Spring Boot to allow users to create, read, update, and delete expenses.
 
 ## Table of Contents
@@ -9,6 +13,9 @@
 - [Features](#features)
 - [Setup](#setup)
 - [Usage](#usage)
+- [Authentication](#authentication)
+- [Caching Strategy](#caching-strategy)
+- [Rate and Usage Limits](#rate-and-usage-limits)
 - [HTTP Response Codes](#http-response-codes)
 - [Project Status](#project-status)
 - [Acknowledgements](#acknowledgements)
@@ -18,7 +25,7 @@
 
 Spring Boot Expense Tracker API is a simple RESTful API that allows users to manage their expenses.
 It supports pagination, sorting, and filtering by date range.
-This API uses [JWT](https://jwt.io/) for authentication.
+This API uses [JWT](https://jwt.io/) for authentication and [Redis](https://redis.io/) for caching.
 This project is designed to explore and practice working with the Java programming language, data modeling,
 and user authentication in Spring Boot.
 
@@ -31,6 +38,7 @@ and user authentication in Spring Boot.
 - Spring Boot 3.4.7
 - Lombok 1.18.38
 - [JJWT](https://github.com/jwtk/jjwt) 0.12.6
+- Redis 8.0.3
 
 ## Features
 
@@ -43,6 +51,7 @@ and user authentication in Spring Boot.
   `GET` method.
 - **Refresh Token**: Get a new access token using the `POST` method.
 - **Revoke Tokens**: Invalidates all refresh tokens for the authenticated user using the `POST` method.
+- **Expenses Caching**: Speeds up repeated requests for filtered/paginated expenses using Redis with 60-minute TTL.
 
 ## Setup
 
@@ -50,6 +59,7 @@ To run this API, you’ll need:
 
 * **Java**: Version 21 or higher
 * **Microsoft SQL Server** 2022 or higher
+* **Redis**: Version 8 or higher
 
 How to install:
 
@@ -80,10 +90,16 @@ How to install:
 5. Set environment variables in `.env` for database and JWT secret configuration
 
    ```dotenv
-    SPRING_DATASOURCE_URL=jdbc:sqlserver://localhost:1433;databaseName=ExpenseTrackerAPI;encrypt=true;trustServerCertificate=true
-    SPRING_DATASOURCE_USERNAME=<your_database_username>
-    SPRING_DATASOURCE_PASSWORD=<your_database_password>
-    JWT_SECRET=<your_strong_secret>
+   SPRING_DATASOURCE_URL=jdbc:sqlserver://localhost:1433;databaseName=ExpenseTrackerAPI;encrypt=true;trustServerCertificate=true
+   SPRING_DATASOURCE_USERNAME=<your_database_username>
+   SPRING_DATASOURCE_PASSWORD=<your_database_password>
+
+   JWT_SECRET=<your_strong_secret>
+
+   SPRING_DATA_REDIS_HOST=localhost
+   SPRING_DATA_REDIS_PORT=6379
+   SPRING_DATA_REDIS_USERNAME=
+   SPRING_DATA_REDIS_PASSWORD=
    ```
 
 6. Build the project
@@ -100,7 +116,7 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-1.3.1.jar
+   java -jar target/expense-tracker-api-1.4.0.jar
    ```
 
 ## Usage
@@ -156,10 +172,24 @@ If an API key is missing, malformed, or invalid, you will receive an HTTP 401 Un
 }
 ```
 
+## Caching Strategy
+
+This API uses a **Cache-Aside strategy** to cache expense listing responses.
+
+- Responses to `GET /expenses` are cached in Redis using a combination of:
+   - User ID
+   - Date filter (e.g. `PAST_MONTH`)
+   - Page number, page size, sort order
+- Cache is stored for **60 minutes** (TTL).
+- Whenever an expense is created, updated, or deleted, all related cache entries are automatically evicted.
+- Cache keys follow the pattern: `expenses::userId=<long>:filter=<ExpenseFilter>&from=<LocalDate>&to=<LocalDate>&page=<int>&size=<int>&sort=<Sort>`
+
+See: [Cache-Aside pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside)
+
 ## Rate and Usage Limits
 
 API access rate limits apply on a per-IP address basis in unit time.
-The limit is 60 requests per minute.
+The limit is 10 requests per 10 seconds.
 If you exceed either limit, your request will return an HTTP 429 `Too Many Requests` status code.
 
 Each API response returns the following set of headers to help you identify your use status:
