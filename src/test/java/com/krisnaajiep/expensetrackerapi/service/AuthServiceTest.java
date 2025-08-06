@@ -1,5 +1,6 @@
 package com.krisnaajiep.expensetrackerapi.service;
 
+import com.krisnaajiep.expensetrackerapi.handler.exception.TooManyRequestsException;
 import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
@@ -160,6 +161,22 @@ class AuthServiceTest {
         assertThrows(BadCredentialsException.class, () -> authService.login(user.getEmail(), PASSWORD));
 
         verify(authenticationManager, times(1)).authenticate(any(Authentication.class));
+        verify(authentication, never()).getPrincipal();
+        verify(userDetails, never()).getId();
+        verify(userDetails, never()).getUsername();
+        verify(jwtUtility, never()).generateToken(anyString(), anyString());
+    }
+
+    @Test
+    void testLogin_Jailed() {
+        when(loginAttemptService.getClientIp()).thenReturn(CLIENT_IP);
+        when(loginAttemptService.isJailed(CLIENT_IP)).thenReturn(true);
+
+        assertThrows(TooManyRequestsException.class, () -> authService.login(user.getEmail(), PASSWORD));
+
+        verify(loginAttemptService, times(1)).getClientIp();
+        verify(loginAttemptService, times(1)).isJailed(CLIENT_IP);
+        verify(authenticationManager, never()).authenticate(any(Authentication.class));
         verify(authentication, never()).getPrincipal();
         verify(userDetails, never()).getId();
         verify(userDetails, never()).getUsername();
