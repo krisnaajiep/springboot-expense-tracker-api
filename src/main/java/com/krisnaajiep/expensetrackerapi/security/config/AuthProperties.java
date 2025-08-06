@@ -11,6 +11,7 @@ Version 1.0
 */
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -25,8 +26,14 @@ import org.springframework.validation.annotation.Validated;
 @Getter
 @Validated
 public class AuthProperties {
+    @NotNull
     private Jwt jwt;
+
+    @NotNull
     private RefreshToken refreshToken;
+
+    @NotNull
+    private Login login;
 
     @Getter
     @Setter
@@ -35,6 +42,7 @@ public class AuthProperties {
         @Size(min = 32, max = 512)
         private String secret;
 
+        @NotNull
         @Positive
         private long expiration;
     }
@@ -42,7 +50,20 @@ public class AuthProperties {
     @Getter
     @Setter
     public static class RefreshToken {
+        @NotNull
         @Positive
         private long expiration;
+    }
+
+    @Getter
+    @Setter
+    public static class Login {
+        @NotNull
+        @Positive
+        private int maxAttempts;
+
+        @NotNull
+        @Positive
+        private long jailDuration;
     }
 }
