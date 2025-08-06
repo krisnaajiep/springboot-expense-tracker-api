@@ -10,7 +10,7 @@ Created on 27/06/25 02.53
 Version 1.0
 */
 
-import com.krisnaajiep.expensetrackerapi.config.AuthProperties;
+import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
@@ -165,7 +165,7 @@ public class AuthService {
 
         String newRefreshToken = SecureRandomUtility.generateRandomString(32);
         refreshToken.setToken(DigestUtils.sha256Hex(newRefreshToken));
-        refreshToken.setExpiryDate(Instant.now().plusMillis(authProperties.getRefreshTokenExpiration()));
+        refreshToken.setExpiryDate(Instant.now().plusMillis(authProperties.getRefreshToken().getExpiration()));
         refreshToken.setRotatedAt(Instant.now());
 
         log.info("Refreshed token for user with id: {}", user.getId());
@@ -198,7 +198,7 @@ public class AuthService {
         return RefreshToken.builder()
                 .user(user)
                 .token(DigestUtils.sha256Hex(token))
-                .expiryDate(Instant.now().plusMillis(authProperties.getRefreshTokenExpiration()))
+                .expiryDate(Instant.now().plusMillis(authProperties.getRefreshToken().getExpiration()))
                 .build();
     }
 }

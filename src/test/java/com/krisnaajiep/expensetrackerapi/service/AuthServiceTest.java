@@ -1,6 +1,6 @@
 package com.krisnaajiep.expensetrackerapi.service;
 
-import com.krisnaajiep.expensetrackerapi.config.AuthProperties;
+import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
@@ -55,6 +55,9 @@ class AuthServiceTest {
     @Mock
     private AuthProperties authProperties;
 
+    @Mock
+    private AuthProperties.RefreshToken refreshTokenProperties;
+
     @InjectMocks
     private AuthService authService;
 
@@ -86,7 +89,8 @@ class AuthServiceTest {
         when(passwordEncoder.encode(user.getPassword())).thenReturn(ENCODED_PASSWORD);
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
-        when(authProperties.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
+        when(authProperties.getRefreshToken()).thenReturn(refreshTokenProperties);
+        when(refreshTokenProperties.getExpiration()).thenReturn(REFRESH_TOKEN_EXP);
 
         TokenResponseDto tokenResponseDto = authService.register(user);
 
@@ -122,7 +126,8 @@ class AuthServiceTest {
         when(userDetails.getId()).thenReturn(user.getId());
         when(userDetails.getUsername()).thenReturn(user.getEmail());
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
-        when(authProperties.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
+        when(authProperties.getRefreshToken()).thenReturn(refreshTokenProperties);
+        when(refreshTokenProperties.getExpiration()).thenReturn(REFRESH_TOKEN_EXP);
 
         TokenResponseDto tokenResponseDto = authService.login(user.getEmail(), PASSWORD);
 
@@ -156,7 +161,8 @@ class AuthServiceTest {
     void testRefresh_Success() {
         when(refreshTokenRepository.findByToken(ENCODED_REFRESH_TOKEN)).thenReturn(Optional.of(refreshToken));
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
-        when(authProperties.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
+        when(authProperties.getRefreshToken()).thenReturn(refreshTokenProperties);
+        when(refreshTokenProperties.getExpiration()).thenReturn(REFRESH_TOKEN_EXP);
 
         TokenResponseDto tokenResponseDto = authService.refreshToken(REFRESH_TOKEN);
 

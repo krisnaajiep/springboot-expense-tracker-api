@@ -1,4 +1,4 @@
-package com.krisnaajiep.expensetrackerapi.config;
+package com.krisnaajiep.expensetrackerapi.security.config;
 
 /*
 IntelliJ IDEA 2025.1 (Ultimate Edition)
@@ -25,13 +25,24 @@ import org.springframework.validation.annotation.Validated;
 @Getter
 @Validated
 public class AuthProperties {
-    @NotBlank
-    @Size(min = 32, max = 512)
-    private String jwtSecret;
+    private Jwt jwt;
+    private RefreshToken refreshToken;
 
-    @Positive
-    private long jwtExpiration;
+    @Getter
+    @Setter
+    public static class Jwt {
+        @NotBlank
+        @Size(min = 32, max = 512)
+        private String secret;
 
-    @Positive
-    private long refreshTokenExpiration;
+        @Positive
+        private long expiration;
+    }
+
+    @Getter
+    @Setter
+    public static class RefreshToken {
+        @Positive
+        private long expiration;
+    }
 }
