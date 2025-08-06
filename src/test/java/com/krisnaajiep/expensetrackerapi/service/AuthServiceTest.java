@@ -10,6 +10,7 @@ import com.krisnaajiep.expensetrackerapi.security.CustomUserDetails;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
+import com.krisnaajiep.expensetrackerapi.security.service.LoginAttemptService;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +59,9 @@ class AuthServiceTest {
     @Mock
     private AuthProperties.RefreshToken refreshTokenProperties;
 
+    @Mock
+    private LoginAttemptService loginAttemptService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -70,6 +74,7 @@ class AuthServiceTest {
     private static final String PASSWORD = SecureRandomUtility.generateRandomString(8);
     private static final String ENCODED_PASSWORD = SecureRandomUtility.generateRandomString(10);
     private static final long REFRESH_TOKEN_EXP = 86400000;
+    private static final String CLIENT_IP = "127.0.0.1";
 
     @BeforeEach
     void setUp() {
@@ -120,6 +125,8 @@ class AuthServiceTest {
 
     @Test
     void testLogin_Success() {
+        when(loginAttemptService.getClientIp()).thenReturn(CLIENT_IP);
+        when(loginAttemptService.isJailed(CLIENT_IP)).thenReturn(false);
         when(authenticationManager.authenticate(any(Authentication.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
@@ -145,6 +152,8 @@ class AuthServiceTest {
 
     @Test
     void testLogin_InvalidCredentials() {
+        when(loginAttemptService.getClientIp()).thenReturn(CLIENT_IP);
+        when(loginAttemptService.isJailed(CLIENT_IP)).thenReturn(false);
         when(authenticationManager.authenticate(any(Authentication.class)))
                 .thenThrow(BadCredentialsException.class);
 
