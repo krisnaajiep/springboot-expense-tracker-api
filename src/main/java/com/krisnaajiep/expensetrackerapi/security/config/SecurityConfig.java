@@ -1,4 +1,4 @@
-package com.krisnaajiep.expensetrackerapi.security;
+package com.krisnaajiep.expensetrackerapi.security.config;
 
 /*
 IntelliJ IDEA 2025.1 (Ultimate Edition)
@@ -10,9 +10,12 @@ Created on 27/06/25 03.00
 Version 1.0
 */
 
+import com.krisnaajiep.expensetrackerapi.security.JwtAuthenticationFilter;
+import com.krisnaajiep.expensetrackerapi.security.JwtAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -55,9 +58,12 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(
             DaoAuthenticationProvider daoAuthenticationProvider,
-            JwtAuthenticationProvider jwtAuthenticationProvider
+            JwtAuthenticationProvider jwtAuthenticationProvider,
+            AuthenticationEventPublisher eventPublisher
     ) {
-        return new ProviderManager(jwtAuthenticationProvider, daoAuthenticationProvider);
+        ProviderManager manager = new ProviderManager(jwtAuthenticationProvider, daoAuthenticationProvider);
+        manager.setAuthenticationEventPublisher(eventPublisher);
+        return manager;
     }
 
     @Bean
