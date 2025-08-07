@@ -1,6 +1,6 @@
 # Spring Boot Expense Tracker API
 
-![Current Version](https://img.shields.io/badge/version-1.4.0-green)
+![Current Version](https://img.shields.io/badge/version-1.5.0-green)
 [![Framework](https://img.shields.io/badge/framework-Spring_Boot-6DB33F?logo=springboot&logoColor=white)](https://spring.io/)
 [![Redis](https://img.shields.io/badge/cache-Redis-DC382D?logo=redis&logoColor=white)](https://redis.io/)
 
@@ -52,6 +52,7 @@ and user authentication in Spring Boot.
 - **Refresh Token**: Get a new access token using the `POST` method.
 - **Revoke Tokens**: Invalidates all refresh tokens for the authenticated user using the `POST` method.
 - **Expenses Caching**: Speeds up repeated requests for filtered/paginated expenses using Redis with 60-minute TTL.
+- **Brute-force Protection**: Automatically jail IP addresses after repeated failed login attempts.
 
 ## Setup
 
@@ -116,7 +117,7 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-1.4.0.jar
+   java -jar target/expense-tracker-api-1.5.0.jar
    ```
 
 ## Usage
@@ -132,7 +133,7 @@ How to install:
    {
      "name": "John Doe",
      "email": "john@doe.com",
-     "password": "<your_secret_password>"
+     "password": "MyPass_1234"
    }
    ```
 
@@ -164,11 +165,28 @@ You must include an access token in each request to the API with the Authorizati
 
 ### Authentication error response
 
-If an API key is missing, malformed, or invalid, you will receive an HTTP 401 Unauthorized response code.
+If an API key is missing, malformed, or invalid, you will receive a `401 Unauthorized` HTTP status.
 
 ```json
 {
   "message": "Unauthorized"
+}
+```
+
+### Brute-force Login Protection
+
+This API implements brute-force protection by tracking failed login attempts per IP address using Redis.
+
+- After `5` consecutive failed login attempts, the IP address will be temporarily **jailed**.
+- While jailed, the IP cannot make further login attempts for `10 minutes`.
+- The jailed IP will receive a `429 Too Many Requests` HTTP status.
+- A `Retry-After` response header (in milliseconds) is included to indicate how long the client must wait before retrying.
+
+Example error response when jailed:
+
+```json
+{
+  "message": "Too many failed login attempts. Please try again later."
 }
 ```
 
