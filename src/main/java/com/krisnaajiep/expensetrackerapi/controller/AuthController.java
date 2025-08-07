@@ -65,6 +65,7 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "User logged in successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content),
             @ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content),
+            @ApiResponse(responseCode = "429", description = "Too many login attempts", content = @Content)
     })
     @PostMapping(
             value = "/login",

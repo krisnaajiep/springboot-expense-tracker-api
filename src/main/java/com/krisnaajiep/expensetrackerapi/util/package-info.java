@@ -2,10 +2,8 @@
  * This package contains utility classes and helper functions that provide
  * common functionality used across the application. It includes:
  * <ul>
- *     <li>Environment variables utility</li>
- *     <li>Random string generation helpers</li>
- *     <li>JSON property name getter function for validation</li>
- *     <li>Generic helper methods</li>
+ *     <li>{@link com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility} for random string generation</li>
+ *     <li>{@link com.krisnaajiep.expensetrackerapi.util.ValidationUtility} for JSON property name validation</li>
  * </ul>
  *
  * @since 0.0.1

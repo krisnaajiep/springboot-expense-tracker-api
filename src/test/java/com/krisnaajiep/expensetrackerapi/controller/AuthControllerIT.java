@@ -12,6 +12,7 @@ import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
+import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +58,9 @@ class AuthControllerIT {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuthProperties authProperties;
 
     private final RegisterRequestDto registerRequestDto = new RegisterRequestDto();
     private final LoginRequestDto loginRequestDto = new LoginRequestDto();
@@ -217,6 +221,44 @@ class AuthControllerIT {
             assertNotNull(response);
             assertNotNull(response.get("message"));
             assertEquals("Invalid credentials", response.get("message"));
+        });
+    }
+
+    @Test
+    void testLogin_TooManyRequests() throws Exception {
+        loginRequestDto.setEmail(USER_EMAIL);
+        loginRequestDto.setPassword(USER_PASSWORD);
+        final String clientIp = "127.0.0.2";
+        final long maxAttempts = authProperties.getLogin().getMaxAttempts();
+
+        for (int i = 0; i < maxAttempts; i++) {
+            mockMvc.perform(post("/login")
+                    .accept(MediaType.ALL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(loginRequestDto))
+                    .header("X-Forwarded-For", clientIp)
+            ).andExpectAll(
+                    status().isUnauthorized()
+            );
+        }
+
+        mockMvc.perform(post("/login")
+                .accept(MediaType.ALL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequestDto))
+                .header("X-Forwarded-For", clientIp)
+        ).andExpectAll(
+                status().isTooManyRequests()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {}
+            );
+
+            assertNotNull(response);
+            assertNotNull(result.getResponse().getHeader("Retry-After"));
+            assertNotNull(response.get("message"));
+            assertEquals("Too many failed login attempts. Please try again later.", response.get("message"));
         });
     }
 
