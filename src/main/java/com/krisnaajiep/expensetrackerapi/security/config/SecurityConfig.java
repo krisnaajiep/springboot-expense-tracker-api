@@ -78,6 +78,7 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("ETag", "Retry-After"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
@@ -91,11 +92,12 @@ public class SecurityConfig {
             AuthenticationEntryPoint authenticationEntryPoint
     ) throws Exception {
         http
-                .cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults()) // Enable CORS
+                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless sessions
                 .httpBasic(AbstractHttpConfigurer::disable) // Disable basic authentication
+                .formLogin(AbstractHttpConfigurer::disable) // Disable form-based authentication
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers( // Allow access to these endpoints
                                 "/register",
@@ -108,9 +110,12 @@ public class SecurityConfig {
                                 "/swagger-ui.html")
                         .permitAll()
                         .anyRequest().authenticated()) // Require authentication for all other requests
-                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class) // Add a JWT authentication filter
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)); // Custom entry point for unauthorized access
+                        .authenticationEntryPoint(authenticationEntryPoint)) // Custom entry point for unauthorized access
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp
+                        .policyDirectives("default-src 'none'"))); // Add a CSP header to the response
 
         return http.build();
     }
