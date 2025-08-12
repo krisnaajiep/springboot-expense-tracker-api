@@ -15,6 +15,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -27,7 +28,7 @@ import java.time.LocalDate;
 @Schema(name = "ExpenseRequest", description = "Expense request body")
 public class ExpenseRequestDto {
     @NotBlank
-    @Size(max = 255)
+    @Size(min = 1, max = 255)
     @Schema(description = "Expense description", example = "Purchase of new computer")
     private String description;
 
@@ -37,15 +38,17 @@ public class ExpenseRequestDto {
     @Schema(description = "Expense amount", example = "800.00")
     private BigDecimal amount;
 
-    @NotBlank
-    @Size(max = 20)
-    @Pattern(regexp = "^(Groceries|Leisure|Electronics|Utilities|Clothing|Health|Others)$",
-             message = "Category must be one of: Groceries, Leisure, Electronics, Utilities, Clothing, Health, Others")
+    @NotNull
+    @Pattern(
+            regexp = "^(Groceries|Leisure|Electronics|Utilities|Clothing|Health|Others)$",
+            message = "{category.Pattern}"
+    )
     @Schema(description = "Expense category", example = "Electronics")
     private String category;
 
     @NotNull
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @PastOrPresent
     @Schema(description = "Expense date", example = "2025-06-30")
     private LocalDate date; // Format: YYYY-MM-DD
 }

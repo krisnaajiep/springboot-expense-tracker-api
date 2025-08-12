@@ -59,6 +59,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 }
         );
 
+        logger.error("Validation error occurred: " + errors);
+
         return new ResponseEntity<>(Map.of("errors", errors), headers, status);
     }
 
@@ -77,7 +79,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             return handleDateTimeParseException(dtpEx);
         }
 
-        logger.error("An error occurred while parsing the request body: " + ex.getMessage(), ex);
+        logger.error("An error occurred while parsing the request body: " + ex.getMessage());
 
         return super.handleHttpMessageNotReadable(ex, headers, status, request);
     }

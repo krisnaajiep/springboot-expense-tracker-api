@@ -17,7 +17,7 @@ public class UserMapper {
     public static User toUser(RegisterRequestDto registerRequestDto) {
         User user = new User();
 
-        user.setName(registerRequestDto.getName());
+        user.setName(registerRequestDto.getName().trim());
         user.setEmail(registerRequestDto.getEmail());
         user.setPassword(registerRequestDto.getPassword());
 

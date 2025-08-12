@@ -14,6 +14,7 @@ import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,8 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -68,7 +68,7 @@ class AuthControllerIT {
 
     private static final String USER_NAME = "John Doe";
     private static final String USER_EMAIL = "john@doe.com";
-    private static final String USER_PASSWORD = SecureRandomUtility.generateRandomString(8);
+    private static final String USER_PASSWORD = SecureRandomUtility.generateRandomString(8) + "1_2";
 
     @BeforeEach
     void setUp() {
@@ -82,9 +82,9 @@ class AuthControllerIT {
 
     @Test
     void testRegister_ValidationErrors() throws Exception {
-        registerRequestDto.setName("");
-        registerRequestDto.setEmail("john.com");
-        registerRequestDto.setPassword(null);
+        registerRequestDto.setName("<h1>John Doe</h1>");
+        registerRequestDto.setEmail("john_doe.com");
+        registerRequestDto.setPassword("invalid123");
 
         mockMvc.perform(post("/register")
                 .accept(MediaType.ALL)
@@ -102,9 +102,15 @@ class AuthControllerIT {
             assertNotNull(response);
             assertNotNull(response.get("errors"));
             assertEquals(3, ((Map<?, ?>) response.get("errors")).size());
-            assertEquals("must not be blank", ((Map<?, ?>) response.get("errors")).get("name"));
-            assertEquals("must be a well-formed email address", ((Map<?, ?>) response.get("errors")).get("email"));
-            assertEquals("must not be blank", ((Map<?, ?>) response.get("errors")).get("password"));
+            assertEquals(
+                    ValidationMessages.getValidationMessage("name.Pattern"),
+                    ((Map<?, ?>) response.get("errors")).get("name")
+            );
+            assertEquals(ValidationMessages.EMAIL_MESSAGE, ((Map<?, ?>) response.get("errors")).get("email"));
+            assertEquals(
+                    ValidationMessages.getValidationMessage("password.Pattern"),
+                    ((Map<?, ?>) response.get("errors")).get("password")
+            );
         });
     }
 
@@ -195,8 +201,8 @@ class AuthControllerIT {
             assertNotNull(response);
             assertNotNull(response.get("errors"));
             assertEquals(2, ((Map<?, ?>) response.get("errors")).size());
-            assertEquals("must be a well-formed email address", ((Map<?, ?>) response.get("errors")).get("email"));
-            assertEquals("must not be blank", ((Map<?, ?>) response.get("errors")).get("password"));
+            assertEquals(ValidationMessages.EMAIL_MESSAGE, ((Map<?, ?>) response.get("errors")).get("email"));
+            assertEquals(ValidationMessages.NOT_BLANK_MESSAGE, ((Map<?, ?>) response.get("errors")).get("password"));
         });
     }
 
@@ -405,12 +411,33 @@ class AuthControllerIT {
     }
 
     @Test
+    void testRevoke_Unauthorized() throws Exception {
+        String accessToken = jwtUtility.generateToken(Long.toString(1L), null);
+
+        mockMvc.perform(post("/revoke")
+                .accept(MediaType.ALL)
+                .header("Authorization", "Bearer " + accessToken)
+        ).andExpect(
+                status().isUnauthorized()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {}
+            );
+
+            assertNotNull(response);
+            assertNotNull(response.get("message"));
+            assertEquals("Unauthorized", response.get("message"));
+        });
+    }
+
+    @Test
     void testRevoke_Success() throws Exception {
         String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
         setRefreshToken(rawRefreshToken, Instant.now().plusMillis(86400000));
         refreshTokenRequestDto.setRefreshToken(rawRefreshToken);
 
-        String accessToken = jwtUtility.generateToken(USER_EMAIL, USER_EMAIL);
+        String accessToken = jwtUtility.generateToken(Long.toString(1L), USER_EMAIL);
 
         mockMvc.perform(post("/revoke")
                 .accept(MediaType.ALL)
