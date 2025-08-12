@@ -274,7 +274,7 @@ components:
       properties:
         description:
           maxLength: 255
-          minLength: 0
+          minLength: 1
           type: string
           description: Expense description
           example: Purchase of new computer
@@ -285,8 +285,6 @@ components:
           description: Expense amount
           example: 800.0
         category:
-          maxLength: 20
-          minLength: 0
           pattern: ^(Groceries|Leisure|Electronics|Utilities|Clothing|Health|Others)$
           type: string
           description: Expense category
@@ -332,19 +330,21 @@ components:
       properties:
         name:
           maxLength: 255
-          minLength: 0
+          minLength: 1
+          pattern: "^[\\p{L}\\s,.'-]*$"
           type: string
           description: User name
           example: John Doe
         email:
           maxLength: 255
-          minLength: 0
+          minLength: 1
           type: string
           description: User email
           example: john@doe.com
         password:
           maxLength: 255
-          minLength: 0
+          minLength: 8
+          pattern: "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@_#\\-$]).*$"
           type: string
           description: User password
       description: Register request body
