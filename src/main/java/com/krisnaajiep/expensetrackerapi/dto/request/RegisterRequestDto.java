@@ -13,6 +13,7 @@ Version 1.0
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -20,18 +21,20 @@ import lombok.Data;
 @Schema(name = "RegisterRequest", description = "Register request body")
 public class RegisterRequestDto {
     @NotBlank
-    @Size(max = 255)
+    @Size(min = 1, max = 255)
     @Schema(description = "User name", example = "John Doe")
+    @Pattern(regexp = "^[\\p{L}\\s,.'-]*$", message = "{name.Pattern}")
     private String name;
 
     @NotBlank
     @Email
-    @Size(max = 255)
+    @Size(min = 1, max = 255)
     @Schema(description = "User email", example = "john@doe.com")
     private String email;
 
     @NotBlank
-    @Size(max = 255)
+    @Size(min = 8, max = 255)
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@_#\\-$]).*$", message = "{password.Pattern}")
     @Schema(description = "User password")
     private String password;
 }
