@@ -10,6 +10,8 @@ Created on 30/06/25 03.04
 Version 1.0
 */
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.krisnaajiep.expensetrackerapi.config.SwaggerConfig;
 import com.krisnaajiep.expensetrackerapi.dto.request.ExpenseFilter;
 import com.krisnaajiep.expensetrackerapi.dto.request.ExpenseRequestDto;
@@ -28,8 +30,10 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +55,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class ExpenseController {
     private final ExpenseService expenseService;
+    private final ObjectMapper objectMapper;
 
     @Operation(summary = "Create a new expense")
     @ApiResponses({
@@ -139,7 +144,7 @@ public class ExpenseController {
             @RequestParam(required = false) LocalDate to,
 
             @ParameterObject Pageable pageable
-    ) {
+    ) throws JsonProcessingException {
         PagedResponseDto<ExpenseResponseDto> pagedResponseDto = expenseService.findAll(
                 userDetails.getId(),
                 filter,
@@ -148,6 +153,9 @@ public class ExpenseController {
                 pageable
         );
 
-        return ResponseEntity.ok(pagedResponseDto);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noCache().cachePrivate().mustRevalidate())
+                .eTag(DigestUtils.md5Hex(objectMapper.writeValueAsString(pagedResponseDto)))
+                .body(pagedResponseDto);
     }
 }

@@ -12,6 +12,7 @@ import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -457,8 +458,18 @@ class ExpenseControllerIT {
         ).andExpect(
                 status().isOk()
         ).andDo(result -> {
+            String contentAsString = result.getResponse().getContentAsString();
+
+            String actualCacheControl = result.getResponse().getHeader("Cache-Control");
+            String actualEtag = result.getResponse().getHeader("ETag");
+            String expectedCacheControl = "no-cache, must-revalidate, private";
+            String expectedEtag = "\"" + DigestUtils.md5Hex(contentAsString)  + "\"";
+
+            assertEquals(expectedCacheControl, actualCacheControl);
+            assertEquals(expectedEtag, actualEtag);
+
             PagedResponseDto<ExpenseResponseDto> response = objectMapper.readValue(
-                    result.getResponse().getContentAsString(),
+                    contentAsString,
                     new TypeReference<>() {
                     }
             );
