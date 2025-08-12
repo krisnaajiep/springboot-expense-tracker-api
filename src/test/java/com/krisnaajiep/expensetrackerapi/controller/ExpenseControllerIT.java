@@ -12,6 +12,7 @@ import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -122,7 +123,15 @@ class ExpenseControllerIT {
             );
 
             assertNotNull(response);
-            assertTrue(response.containsKey("errors"));
+            assertNotNull(response.get("errors"));
+            assertEquals(4, ((Map<?, ?>) response.get("errors")).size());
+            assertEquals(ValidationMessages.NOT_BLANK_MESSAGE, ((Map<?, ?>) response.get("errors")).get("description"));
+            assertEquals(ValidationMessages.DECIMAL_MIN_MESSAGE, ((Map<?, ?>) response.get("errors")).get("amount"));
+            assertEquals(
+                    ValidationMessages.getValidationMessage("category.Pattern"),
+                    ((Map<?, ?>) response.get("errors")).get("category")
+            );
+            assertEquals(ValidationMessages.PAST_OR_PRESENT_MESSAGE, ((Map<?, ?>) response.get("errors")).get("date"));
         });
     }
 
@@ -186,10 +195,13 @@ class ExpenseControllerIT {
 
     @Test
     void testUpdate_Unauthorized() throws Exception {
+        String accessToken = jwtUtility.generateToken(user.getId().toString(), " ");
+
         mockMvc.perform(post("/expenses/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
                 .content(objectMapper.writeValueAsString(expenseRequestDto))
+                .header("Authorization", "Bearer " + accessToken)
         ).andExpect(
                 status().isUnauthorized()
         ).andDo(result -> {
@@ -224,7 +236,15 @@ class ExpenseControllerIT {
             );
 
             assertNotNull(response);
-            assertTrue(response.containsKey("errors"));
+            assertNotNull(response.get("errors"));
+            assertEquals(4, ((Map<?, ?>) response.get("errors")).size());
+            assertEquals(ValidationMessages.NOT_BLANK_MESSAGE, ((Map<?, ?>) response.get("errors")).get("description"));
+            assertEquals(ValidationMessages.DECIMAL_MIN_MESSAGE, ((Map<?, ?>) response.get("errors")).get("amount"));
+            assertEquals(
+                    ValidationMessages.getValidationMessage("category.Pattern"),
+                    ((Map<?, ?>) response.get("errors")).get("category")
+            );
+            assertEquals(ValidationMessages.PAST_OR_PRESENT_MESSAGE, ((Map<?, ?>) response.get("errors")).get("date"));
         });
     }
 
@@ -347,6 +367,7 @@ class ExpenseControllerIT {
     void testDelete_Unauthorized() throws Exception {
         mockMvc.perform(delete("/expenses/1")
                 .accept(MediaType.ALL)
+                .header("Authorization", "Bearer abc")
         ).andExpect(
                 status().isUnauthorized()
         ).andDo(result -> {
@@ -433,6 +454,7 @@ class ExpenseControllerIT {
     void testFindAll_Unauthorized() throws Exception {
         mockMvc.perform(get("/expenses")
                 .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", "abc")
         ).andExpect(
                 status().isUnauthorized()
         ).andDo(result -> {
@@ -493,16 +515,16 @@ class ExpenseControllerIT {
 
     private void setInvalidExpenseRequest() {
         invalidExpenseRequest.put("description", null);
-        invalidExpenseRequest.put("category", "Invalid category");
+        invalidExpenseRequest.put("category", "Invalid");
         invalidExpenseRequest.put("amount", new BigDecimal(-100));
-        invalidExpenseRequest.put("date", null);
+        invalidExpenseRequest.put("date", LocalDate.now().plusDays(1));
     }
 
     private void setUpdateExpenseRequest() {
         expenseRequestDto.setDescription("Updated expense description");
         expenseRequestDto.setCategory("Others");
         expenseRequestDto.setAmount(new BigDecimal("300.00"));
-        expenseRequestDto.setDate(LocalDate.now().plusDays(1));
+        expenseRequestDto.setDate(LocalDate.now().minusDays(1));
     }
 
     private void setAnotherExpense() {
