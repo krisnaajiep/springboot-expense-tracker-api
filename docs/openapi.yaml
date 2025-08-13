@@ -12,7 +12,7 @@ info:
   license:
     name: MIT License
     url: https://opensource.org/licenses/MIT
-  version: 1.4.0
+  version: 1.5.0
 servers:
 - url: http://localhost:8080
   description: ⚠️ Only for local testing
@@ -347,6 +347,7 @@ components:
           pattern: "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@_#\\-$]).*$"
           type: string
           description: User password
+          example: MyPass_1234
       description: Register request body
     TokenResponse:
       type: object
@@ -383,6 +384,7 @@ components:
           minLength: 1
           type: string
           description: User password
+          example: MyPass_1234
       description: Login request body
     PageMetadata:
       type: object
