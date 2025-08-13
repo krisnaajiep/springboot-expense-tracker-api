@@ -1,6 +1,6 @@
 package com.krisnaajiep.expensetrackerapi.dto.request;
 
-import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import jakarta.validation.ConstraintViolation;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +17,7 @@ class RegisterRequestDtoTest extends RequestDtoTest<RegisterRequestDto> {
     void setUp() {
         registerRequestDto.setName("John Doe");
         registerRequestDto.setEmail("john@doe.com");
-        registerRequestDto.setPassword(SecureRandomUtility.generateRandomString(8) + "1_2");
+        registerRequestDto.setPassword(StringUtility.generatePasswordForTest());
     }
 
     @Test
@@ -48,9 +48,9 @@ class RegisterRequestDtoTest extends RequestDtoTest<RegisterRequestDto> {
 
     @Test
     void testMaxSizeInputs_ValidationErrors() {
-        registerRequestDto.setName(SecureRandomUtility.generateRandomString(256));
-        registerRequestDto.setEmail(SecureRandomUtility.generateRandomString(256) + "@email.com");
-        registerRequestDto.setPassword(SecureRandomUtility.generateRandomString(256) + "1_2");
+        registerRequestDto.setName(StringUtility.generateRandomString(256));
+        registerRequestDto.setEmail(StringUtility.generateRandomString(256) + "@email.com");
+        registerRequestDto.setPassword(StringUtility.generateRandomString(256) + "Ab_1");
         Set<ConstraintViolation<RegisterRequestDto>> violations = validator.validate(registerRequestDto);
 
         assertFalse(violations.isEmpty());

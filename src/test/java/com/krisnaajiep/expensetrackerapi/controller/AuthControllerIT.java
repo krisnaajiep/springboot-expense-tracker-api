@@ -13,7 +13,7 @@ import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
-import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,7 +68,7 @@ class AuthControllerIT {
 
     private static final String USER_NAME = "John Doe";
     private static final String USER_EMAIL = "john@doe.com";
-    private static final String USER_PASSWORD = SecureRandomUtility.generateRandomString(8) + "1_2";
+    private static final String USER_PASSWORD = StringUtility.generatePasswordForTest();
 
     @BeforeEach
     void setUp() {
@@ -357,7 +357,7 @@ class AuthControllerIT {
 
     @Test
     void testRefresh_Expired() throws Exception {
-        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        String rawRefreshToken = StringUtility.generateSecureToken(32);
         setRefreshToken(rawRefreshToken, Instant.now().minusSeconds(3600));
         refreshTokenRequestDto.setRefreshToken(rawRefreshToken);
 
@@ -382,7 +382,7 @@ class AuthControllerIT {
 
     @Test
     void testRefresh_Success() throws Exception {
-        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        String rawRefreshToken = StringUtility.generateSecureToken(32);
         setRefreshToken(rawRefreshToken, Instant.now().plusMillis(86400000));
         refreshTokenRequestDto.setRefreshToken(rawRefreshToken);
 
@@ -433,7 +433,7 @@ class AuthControllerIT {
 
     @Test
     void testRevoke_Success() throws Exception {
-        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        String rawRefreshToken = StringUtility.generateSecureToken(32);
         setRefreshToken(rawRefreshToken, Instant.now().plusMillis(86400000));
         refreshTokenRequestDto.setRefreshToken(rawRefreshToken);
 

@@ -11,7 +11,7 @@ import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
-import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,7 +75,7 @@ class ExpenseControllerIT {
         user = User.builder()
                 .name("Test User")
                 .email("test@user.com")
-                .password(SecureRandomUtility.generateRandomString(8))
+                .password(StringUtility.generatePasswordForTest())
                 .build();
 
         user = userRepository.save(user);
@@ -531,7 +531,7 @@ class ExpenseControllerIT {
         User anotherUser = User.builder()
                 .name("Another User")
                 .email("another@user.com")
-                .password(SecureRandomUtility.generateRandomString(8))
+                .password(StringUtility.generatePasswordForTest())
                 .build();
 
         anotherUser = userRepository.save(anotherUser);

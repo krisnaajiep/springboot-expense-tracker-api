@@ -6,7 +6,7 @@ import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
-import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ class ExpenseServiceTest {
     void setUp() {
         user.setId(1L);
         user.setEmail("john@doe");
-        user.setPassword(SecureRandomUtility.generateRandomString(8));
+        user.setPassword(StringUtility.generateRandomString(8));
         user.setName("John Doe");
 
         expense.setId(1L);
@@ -91,7 +91,7 @@ class ExpenseServiceTest {
         User anotherUser = User.builder()
                 .id(2L)
                 .email("jane@doe")
-                .password(SecureRandomUtility.generateRandomString(8))
+                .password(StringUtility.generateRandomString(8))
                 .name("Jane Doe")
                 .build();
 
@@ -143,7 +143,7 @@ class ExpenseServiceTest {
         User anotherUser = User.builder()
                 .id(2L)
                 .email("jane@doe")
-                .password(SecureRandomUtility.generateRandomString(8))
+                .password(StringUtility.generateRandomString(8))
                 .name("Jane Doe")
                 .build();
 

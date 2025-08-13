@@ -22,7 +22,7 @@ import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.security.service.LoginAttemptService;
-import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -116,7 +116,7 @@ public class AuthService {
 
         String accessToken = jwtUtility.generateToken(savedUser.getId().toString(), savedUser.getEmail());
 
-        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        String rawRefreshToken = StringUtility.generateSecureToken(32);
         RefreshToken refreshToken = createRefreshToken(savedUser, rawRefreshToken);
         refreshTokenRepository.save(refreshToken);
 
@@ -155,7 +155,7 @@ public class AuthService {
         String accessToken = jwtUtility.generateToken(userDetails.getId().toString(), userDetails.getUsername());
 
         refreshTokenRepository.deleteAllByUserId(userDetails.getId());
-        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        String rawRefreshToken = StringUtility.generateSecureToken(32);
         RefreshToken refreshToken = createRefreshToken(userDetails.user(), rawRefreshToken);
         refreshTokenRepository.save(refreshToken);
 
@@ -186,7 +186,7 @@ public class AuthService {
         User user = refreshToken.getUser();
         String accessToken = jwtUtility.generateToken(user.getId().toString(), user.getEmail());
 
-        String newRefreshToken = SecureRandomUtility.generateRandomString(32);
+        String newRefreshToken = StringUtility.generateSecureToken(32);
         refreshToken.setToken(DigestUtils.sha256Hex(newRefreshToken));
         refreshToken.setExpiryDate(Instant.now().plusMillis(authProperties.getRefreshToken().getExpiration()));
         refreshToken.setRotatedAt(Instant.now());
