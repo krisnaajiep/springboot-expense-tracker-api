@@ -35,6 +35,6 @@ public class RegisterRequestDto {
     @NotBlank
     @Size(min = 8, max = 255)
     @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@_#\\-$]).*$", message = "{password.Pattern}")
-    @Schema(description = "User password")
+    @Schema(description = "User password", example = "MyPass_1234")
     private String password;
 }
