@@ -1,6 +1,6 @@
 package com.krisnaajiep.expensetrackerapi.dto.request;
 
-import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import jakarta.validation.ConstraintViolation;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +56,7 @@ class ExpenseRequestDtoTest extends RequestDtoTest<ExpenseRequestDto> {
 
     @Test
     void testMaxSizeDescription_ValidationErrors() {
-        expenseRequestDto.setDescription(SecureRandomUtility.generateRandomString(256));
+        expenseRequestDto.setDescription(StringUtility.generateRandomString(256));
         Set<ConstraintViolation<ExpenseRequestDto>> violations = validator.validate(expenseRequestDto);
 
         assertFalse(violations.isEmpty());
