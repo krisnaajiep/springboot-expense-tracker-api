@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -51,7 +52,7 @@ class ExpenseServiceTest {
         user.setPassword(StringUtility.generateRandomString(8));
         user.setName("John Doe");
 
-        expense.setId(1L);
+        expense.setId(UUID.randomUUID());
         expense.setDescription("Test Expense");
         expense.setAmount(new BigDecimal("100.00"));
         expense.setCategory(Expense.Category.fromDisplayName("Others"));
@@ -96,7 +97,7 @@ class ExpenseServiceTest {
                 .build();
 
         Expense anotherExpense = Expense.builder()
-                .id(2L)
+                .id(UUID.randomUUID())
                 .description("Another Expense")
                 .amount(new BigDecimal("200.00"))
                 .category(Expense.Category.fromDisplayName("Others"))
@@ -212,7 +213,7 @@ class ExpenseServiceTest {
         expenses.clear();
         for (int i = 0; i < 100; i++) {
             Expense expense = Expense.builder()
-                    .id((long) (i + 1))
+                    .id(UUID.randomUUID())
                     .description("Expense " + (i + 1))
                     .amount(new BigDecimal("100.00"))
                     .category(Expense.Category.fromDisplayName("Others"))

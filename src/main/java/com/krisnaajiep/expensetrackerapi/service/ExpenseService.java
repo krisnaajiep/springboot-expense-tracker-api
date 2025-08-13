@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Service class for managing expenses. This class provides methods
@@ -102,7 +103,7 @@ public class ExpenseService {
      * @throws AccessDeniedException if the user associated with the existing expense does not match the user in the provided expense
      */
     @Transactional
-    public ExpenseResponseDto update(Long expenseId, Expense expense) {
+    public ExpenseResponseDto update(UUID expenseId, Expense expense) {
         // Check if the expense exists
         Expense existingExpense = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new NotFoundException("Expense not found with ID: " + expenseId));
@@ -138,7 +139,7 @@ public class ExpenseService {
      * @throws AccessDeniedException if the user attempting deletion is not the owner of the expense
      */
     @Transactional
-    public void delete(Long userId, Long expenseId) {
+    public void delete(Long userId, UUID expenseId) {
         // Check if the expense exists
         Expense existingExpense = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new NotFoundException("Expense not found with ID: " + expenseId));

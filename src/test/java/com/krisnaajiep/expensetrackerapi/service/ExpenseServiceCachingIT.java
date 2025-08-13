@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -55,7 +56,7 @@ class ExpenseServiceCachingIT {
         // Set expenses
         for (int i = 0; i < 5; i++) {
             Expense expense = Expense.builder()
-                    .id((long) (i + 1))
+                    .id(UUID.randomUUID())
                     .user(user)
                     .description("Expense " + (i + 1))
                     .amount(new BigDecimal("100.00").multiply(new BigDecimal((i + 1))))
@@ -123,14 +124,14 @@ class ExpenseServiceCachingIT {
 
         assertEquals(1, redisTemplate.keys(keysPattern).size());
 
-        when(expenseRepository.findById(anyLong())).thenReturn(Optional.of(expenses.getFirst()));
+        when(expenseRepository.findById(any(UUID.class))).thenReturn(Optional.of(expenses.getFirst()));
 
-        expenseService.update(user.getId(), expenses.getFirst());
+        expenseService.update(expenses.getFirst().getId(), expenses.getFirst());
 
         assertEquals(0, redisTemplate.keys(keysPattern).size());
 
         verify(expenseRepository, times(1)).findAll(user.getId(), from, to, pageable);
-        verify(expenseRepository, times(1)).findById(anyLong());
+        verify(expenseRepository, times(1)).findById(any(UUID.class));
         verifyNoMoreInteractions(expenseRepository);
     }
 
@@ -143,14 +144,14 @@ class ExpenseServiceCachingIT {
 
         assertEquals(1, redisTemplate.keys(keysPattern).size());
 
-        when(expenseRepository.findById(anyLong())).thenReturn(Optional.of(expenses.getFirst()));
+        when(expenseRepository.findById(any(UUID.class))).thenReturn(Optional.of(expenses.getFirst()));
 
         expenseService.delete(user.getId(), expenses.getFirst().getId());
 
         assertEquals(0, redisTemplate.keys(keysPattern).size());
 
         verify(expenseRepository, times(1)).findAll(user.getId(), from, to, pageable);
-        verify(expenseRepository, times(1)).findById(anyLong());
+        verify(expenseRepository, times(1)).findById(any(UUID.class));
         verify(expenseRepository, times(1)).delete(expenses.getFirst());
         verifyNoMoreInteractions(expenseRepository);
     }
