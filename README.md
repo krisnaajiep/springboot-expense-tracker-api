@@ -14,7 +14,7 @@
 - [Setup](#setup)
 - [Usage](#usage)
 - [Authentication](#authentication)
-- [Caching Strategy](#caching-strategy)
+- [Caching](#caching)
 - [Rate and Usage Limits](#rate-and-usage-limits)
 - [HTTP Response Codes](#http-response-codes)
 - [Project Status](#project-status)
@@ -190,7 +190,7 @@ Example error response when jailed:
 }
 ```
 
-## Caching Strategy
+## Caching
 
 This API uses a **Cache-Aside strategy** to cache expense listing responses.
 
@@ -203,6 +203,13 @@ This API uses a **Cache-Aside strategy** to cache expense listing responses.
 - Cache keys follow the pattern: `expenses::userId=<long>:filter=<ExpenseFilter>&from=<LocalDate>&to=<LocalDate>&page=<int>&size=<int>&sort=<Sort>`
 
 See: [Cache-Aside pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside)
+
+### HTTP Caching
+
+The `GET /expenses` endpoint also supports HTTP caching using `Cache-Control` and `ETag` headers.
+
+- `Cache-Control`: `no-cache, private, must-revalidate`
+- `ETag`: Generated from the MD5 hash of the response body.
 
 ## Rate and Usage Limits
 
