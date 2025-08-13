@@ -1,6 +1,6 @@
 # Spring Boot Expense Tracker API
 
-![Current Version](https://img.shields.io/badge/version-1.4.0-green)
+![Current Version](https://img.shields.io/badge/version-1.5.0-green)
 [![Framework](https://img.shields.io/badge/framework-Spring_Boot-6DB33F?logo=springboot&logoColor=white)](https://spring.io/)
 [![Redis](https://img.shields.io/badge/cache-Redis-DC382D?logo=redis&logoColor=white)](https://redis.io/)
 
@@ -14,7 +14,7 @@
 - [Setup](#setup)
 - [Usage](#usage)
 - [Authentication](#authentication)
-- [Caching Strategy](#caching-strategy)
+- [Caching](#caching)
 - [Rate and Usage Limits](#rate-and-usage-limits)
 - [HTTP Response Codes](#http-response-codes)
 - [Project Status](#project-status)
@@ -52,6 +52,7 @@ and user authentication in Spring Boot.
 - **Refresh Token**: Get a new access token using the `POST` method.
 - **Revoke Tokens**: Invalidates all refresh tokens for the authenticated user using the `POST` method.
 - **Expenses Caching**: Speeds up repeated requests for filtered/paginated expenses using Redis with 60-minute TTL.
+- **Brute-force Protection**: Automatically jail IP addresses after repeated failed login attempts.
 
 ## Setup
 
@@ -116,7 +117,7 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-1.4.0.jar
+   java -jar target/expense-tracker-api-1.5.0.jar
    ```
 
 ## Usage
@@ -132,7 +133,7 @@ How to install:
    {
      "name": "John Doe",
      "email": "john@doe.com",
-     "password": "<your_secret_password>"
+     "password": "MyPass_1234"
    }
    ```
 
@@ -164,7 +165,7 @@ You must include an access token in each request to the API with the Authorizati
 
 ### Authentication error response
 
-If an API key is missing, malformed, or invalid, you will receive an HTTP 401 Unauthorized response code.
+If an API key is missing, malformed, or invalid, you will receive a `401 Unauthorized` HTTP status.
 
 ```json
 {
@@ -172,7 +173,24 @@ If an API key is missing, malformed, or invalid, you will receive an HTTP 401 Un
 }
 ```
 
-## Caching Strategy
+### Brute-force Login Protection
+
+This API implements brute-force protection by tracking failed login attempts per IP address using Redis.
+
+- After `5` consecutive failed login attempts, the IP address will be temporarily **jailed**.
+- While jailed, the IP cannot make further login attempts for `10 minutes`.
+- The jailed IP will receive a `429 Too Many Requests` HTTP status.
+- A `Retry-After` response header (in milliseconds) is included to indicate how long the client must wait before retrying.
+
+Example error response when jailed:
+
+```json
+{
+  "message": "Too many failed login attempts. Please try again later."
+}
+```
+
+## Caching
 
 This API uses a **Cache-Aside strategy** to cache expense listing responses.
 
@@ -185,6 +203,13 @@ This API uses a **Cache-Aside strategy** to cache expense listing responses.
 - Cache keys follow the pattern: `expenses::userId=<long>:filter=<ExpenseFilter>&from=<LocalDate>&to=<LocalDate>&page=<int>&size=<int>&sort=<Sort>`
 
 See: [Cache-Aside pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside)
+
+### HTTP Caching
+
+The `GET /expenses` endpoint also supports HTTP caching using `Cache-Control` and `ETag` headers.
+
+- `Cache-Control`: `no-cache, private, must-revalidate`
+- `ETag`: Generated from the MD5 hash of the response body.
 
 ## Rate and Usage Limits
 

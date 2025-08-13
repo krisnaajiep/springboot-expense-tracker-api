@@ -1,4 +1,4 @@
-package com.krisnaajiep.expensetrackerapi.security;
+package com.krisnaajiep.expensetrackerapi.security.config;
 
 /*
 IntelliJ IDEA 2025.1 (Ultimate Edition)
@@ -10,12 +10,16 @@ Created on 27/06/25 03.00
 Version 1.0
 */
 
+import com.krisnaajiep.expensetrackerapi.security.JwtAuthenticationFilter;
+import com.krisnaajiep.expensetrackerapi.security.JwtAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -26,6 +30,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -50,14 +58,31 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(
             DaoAuthenticationProvider daoAuthenticationProvider,
-            JwtAuthenticationProvider jwtAuthenticationProvider
+            JwtAuthenticationProvider jwtAuthenticationProvider,
+            AuthenticationEventPublisher eventPublisher
     ) {
-        return new ProviderManager(jwtAuthenticationProvider, daoAuthenticationProvider);
+        ProviderManager manager = new ProviderManager(jwtAuthenticationProvider, daoAuthenticationProvider);
+        manager.setAuthenticationEventPublisher(eventPublisher);
+        return manager;
     }
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(AuthenticationManager authenticationManager) {
         return new JwtAuthenticationFilter(authenticationManager);
+    }
+
+    @Bean
+    UrlBasedCorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(false);
+        config.setAllowedOrigins(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("ETag", "Retry-After"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
@@ -67,10 +92,12 @@ public class SecurityConfig {
             AuthenticationEntryPoint authenticationEntryPoint
     ) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults()) // Enable CORS
+                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless sessions
                 .httpBasic(AbstractHttpConfigurer::disable) // Disable basic authentication
+                .formLogin(AbstractHttpConfigurer::disable) // Disable form-based authentication
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers( // Allow access to these endpoints
                                 "/register",
@@ -83,9 +110,12 @@ public class SecurityConfig {
                                 "/swagger-ui.html")
                         .permitAll()
                         .anyRequest().authenticated()) // Require authentication for all other requests
-                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class) // Add a JWT authentication filter
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)); // Custom entry point for unauthorized access
+                        .authenticationEntryPoint(authenticationEntryPoint)) // Custom entry point for unauthorized access
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp
+                        .policyDirectives("default-src 'none'"))); // Add a CSP header to the response
 
         return http.build();
     }

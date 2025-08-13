@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.krisnaajiep</groupId>
     <artifactId>expense-tracker-api</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
     <name>expense-tracker-api</name>
     <description>expense-tracker-api</description>
     <url/>

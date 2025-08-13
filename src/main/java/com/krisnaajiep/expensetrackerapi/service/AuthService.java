@@ -10,7 +10,8 @@ Created on 27/06/25 02.53
 Version 1.0
 */
 
-import com.krisnaajiep.expensetrackerapi.config.AuthProperties;
+import com.krisnaajiep.expensetrackerapi.handler.exception.TooManyRequestsException;
+import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
@@ -20,7 +21,8 @@ import com.krisnaajiep.expensetrackerapi.security.CustomUserDetails;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
-import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.security.service.LoginAttemptService;
+import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -88,6 +90,14 @@ public class AuthService {
     private final AuthProperties authProperties;
 
     /**
+     * A service responsible for handling login attempt operations.
+     * This variable is used to manage and track user login attempts,
+     * such as preventing excessive attempts and enabling security mechanisms
+     * related to account lockout or monitoring.
+     */
+    private final LoginAttemptService loginAttemptService;
+
+    /**
      * Registers a new user into the system. If a user with the same email already exists,
      * a ConflictException is thrown. The user's password is securely encoded before being
      * saved. Upon successful registration, an access token is generated and returned.
@@ -106,7 +116,7 @@ public class AuthService {
 
         String accessToken = jwtUtility.generateToken(savedUser.getId().toString(), savedUser.getEmail());
 
-        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        String rawRefreshToken = StringUtility.generateSecureToken(32);
         RefreshToken refreshToken = createRefreshToken(savedUser, rawRefreshToken);
         refreshTokenRepository.save(refreshToken);
 
@@ -116,14 +126,26 @@ public class AuthService {
     }
 
     /**
-     * Authenticates a user with the provided email and password credentials. If authentication is
-     * successful, a JWT access token is generated and returned.
+     * Handles the login process by authenticating the user's credentials, generating an access token,
+     * creating a refresh token, and returning both tokens. Also manages login attempts to prevent
+     * brute force attacks.
      *
-     * @param email the email of the user attempting to log in
-     * @param password the password of the user attempting to log in
-     * @return a TokenResponseDto object containing the generated access token and refresh token for the authenticated user
+     * @param email The email address of the user attempting to log in.
+     * @param password The password of the user attempting to log in.
+     * @return A {@link TokenResponseDto} containing the generated access token and refresh token.
+     * @throws TooManyRequestsException If the client's IP address is temporarily blocked due to exceeding
+     *                                  the maximum allowed login attempts.
      */
     public TokenResponseDto login(String email, String password) {
+        // Get client IP address
+        String ip = loginAttemptService.getClientIp();
+
+        // Check if the IP address has exceeded maximum login attempts and is currently blocked
+        if (loginAttemptService.isJailed(ip)) {
+            long retryAfter = loginAttemptService.getRemainingJailTime(ip);
+            throw new TooManyRequestsException("Too many failed login attempts. Please try again later.", retryAfter);
+        }
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
         );
@@ -133,10 +155,11 @@ public class AuthService {
         String accessToken = jwtUtility.generateToken(userDetails.getId().toString(), userDetails.getUsername());
 
         refreshTokenRepository.deleteAllByUserId(userDetails.getId());
-        String rawRefreshToken = SecureRandomUtility.generateRandomString(32);
+        String rawRefreshToken = StringUtility.generateSecureToken(32);
         RefreshToken refreshToken = createRefreshToken(userDetails.user(), rawRefreshToken);
         refreshTokenRepository.save(refreshToken);
 
+        loginAttemptService.loginSucceeded(ip);
         log.info("User with email {} logged in", email);
 
         return new TokenResponseDto(accessToken, rawRefreshToken);
@@ -163,9 +186,9 @@ public class AuthService {
         User user = refreshToken.getUser();
         String accessToken = jwtUtility.generateToken(user.getId().toString(), user.getEmail());
 
-        String newRefreshToken = SecureRandomUtility.generateRandomString(32);
+        String newRefreshToken = StringUtility.generateSecureToken(32);
         refreshToken.setToken(DigestUtils.sha256Hex(newRefreshToken));
-        refreshToken.setExpiryDate(Instant.now().plusMillis(authProperties.getRefreshTokenExpiration()));
+        refreshToken.setExpiryDate(Instant.now().plusMillis(authProperties.getRefreshToken().getExpiration()));
         refreshToken.setRotatedAt(Instant.now());
 
         log.info("Refreshed token for user with id: {}", user.getId());
@@ -198,7 +221,7 @@ public class AuthService {
         return RefreshToken.builder()
                 .user(user)
                 .token(DigestUtils.sha256Hex(token))
-                .expiryDate(Instant.now().plusMillis(authProperties.getRefreshTokenExpiration()))
+                .expiryDate(Instant.now().plusMillis(authProperties.getRefreshToken().getExpiration()))
                 .build();
     }
 }

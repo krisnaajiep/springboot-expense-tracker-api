@@ -1,6 +1,7 @@
 package com.krisnaajiep.expensetrackerapi.service;
 
-import com.krisnaajiep.expensetrackerapi.config.AuthProperties;
+import com.krisnaajiep.expensetrackerapi.handler.exception.TooManyRequestsException;
+import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
@@ -10,7 +11,8 @@ import com.krisnaajiep.expensetrackerapi.security.CustomUserDetails;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
-import com.krisnaajiep.expensetrackerapi.util.SecureRandomUtility;
+import com.krisnaajiep.expensetrackerapi.security.service.LoginAttemptService;
+import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,18 +57,25 @@ class AuthServiceTest {
     @Mock
     private AuthProperties authProperties;
 
+    @Mock
+    private AuthProperties.RefreshToken refreshTokenProperties;
+
+    @Mock
+    private LoginAttemptService loginAttemptService;
+
     @InjectMocks
     private AuthService authService;
 
     private final User user = new User();
     private final RefreshToken refreshToken = new RefreshToken();
 
-    private static final String ACCESS_TOKEN = SecureRandomUtility.generateRandomString(32);
-    private static final String REFRESH_TOKEN = SecureRandomUtility.generateRandomString(32);
+    private static final String ACCESS_TOKEN = StringUtility.generateSecureToken(32);
+    private static final String REFRESH_TOKEN = StringUtility.generateSecureToken(32);
     private static final String ENCODED_REFRESH_TOKEN = DigestUtils.sha256Hex(REFRESH_TOKEN);
-    private static final String PASSWORD = SecureRandomUtility.generateRandomString(8);
-    private static final String ENCODED_PASSWORD = SecureRandomUtility.generateRandomString(10);
+    private static final String PASSWORD = StringUtility.generateRandomString(8);
+    private static final String ENCODED_PASSWORD = StringUtility.generateRandomString(8);
     private static final long REFRESH_TOKEN_EXP = 86400000;
+    private static final String CLIENT_IP = "127.0.0.1";
 
     @BeforeEach
     void setUp() {
@@ -86,7 +95,8 @@ class AuthServiceTest {
         when(passwordEncoder.encode(user.getPassword())).thenReturn(ENCODED_PASSWORD);
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
-        when(authProperties.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
+        when(authProperties.getRefreshToken()).thenReturn(refreshTokenProperties);
+        when(refreshTokenProperties.getExpiration()).thenReturn(REFRESH_TOKEN_EXP);
 
         TokenResponseDto tokenResponseDto = authService.register(user);
 
@@ -116,13 +126,16 @@ class AuthServiceTest {
 
     @Test
     void testLogin_Success() {
+        when(loginAttemptService.getClientIp()).thenReturn(CLIENT_IP);
+        when(loginAttemptService.isJailed(CLIENT_IP)).thenReturn(false);
         when(authenticationManager.authenticate(any(Authentication.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
         when(userDetails.getId()).thenReturn(user.getId());
         when(userDetails.getUsername()).thenReturn(user.getEmail());
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
-        when(authProperties.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
+        when(authProperties.getRefreshToken()).thenReturn(refreshTokenProperties);
+        when(refreshTokenProperties.getExpiration()).thenReturn(REFRESH_TOKEN_EXP);
 
         TokenResponseDto tokenResponseDto = authService.login(user.getEmail(), PASSWORD);
 
@@ -140,6 +153,8 @@ class AuthServiceTest {
 
     @Test
     void testLogin_InvalidCredentials() {
+        when(loginAttemptService.getClientIp()).thenReturn(CLIENT_IP);
+        when(loginAttemptService.isJailed(CLIENT_IP)).thenReturn(false);
         when(authenticationManager.authenticate(any(Authentication.class)))
                 .thenThrow(BadCredentialsException.class);
 
@@ -153,10 +168,27 @@ class AuthServiceTest {
     }
 
     @Test
+    void testLogin_Jailed() {
+        when(loginAttemptService.getClientIp()).thenReturn(CLIENT_IP);
+        when(loginAttemptService.isJailed(CLIENT_IP)).thenReturn(true);
+
+        assertThrows(TooManyRequestsException.class, () -> authService.login(user.getEmail(), PASSWORD));
+
+        verify(loginAttemptService, times(1)).getClientIp();
+        verify(loginAttemptService, times(1)).isJailed(CLIENT_IP);
+        verify(authenticationManager, never()).authenticate(any(Authentication.class));
+        verify(authentication, never()).getPrincipal();
+        verify(userDetails, never()).getId();
+        verify(userDetails, never()).getUsername();
+        verify(jwtUtility, never()).generateToken(anyString(), anyString());
+    }
+
+    @Test
     void testRefresh_Success() {
         when(refreshTokenRepository.findByToken(ENCODED_REFRESH_TOKEN)).thenReturn(Optional.of(refreshToken));
         when(jwtUtility.generateToken(user.getId().toString(), user.getEmail())).thenReturn(ACCESS_TOKEN);
-        when(authProperties.getRefreshTokenExpiration()).thenReturn(REFRESH_TOKEN_EXP);
+        when(authProperties.getRefreshToken()).thenReturn(refreshTokenProperties);
+        when(refreshTokenProperties.getExpiration()).thenReturn(REFRESH_TOKEN_EXP);
 
         TokenResponseDto tokenResponseDto = authService.refreshToken(REFRESH_TOKEN);
 

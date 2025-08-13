@@ -10,7 +10,7 @@ Created on 27/06/25 19.06
 Version 1.0
 */
 
-import com.krisnaajiep.expensetrackerapi.config.AuthProperties;
+import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -28,8 +28,8 @@ public class JwtUtility {
     private final long expiration;
 
     public JwtUtility(AuthProperties properties) {
-        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(properties.getJwtSecret()));
-        this.expiration = properties.getJwtExpiration();
+        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(properties.getJwt().getSecret()));
+        this.expiration = properties.getJwt().getExpiration();
     }
 
     public String generateToken(String subject, String email) {

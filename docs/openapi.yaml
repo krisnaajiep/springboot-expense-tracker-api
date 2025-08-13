@@ -12,7 +12,7 @@ info:
   license:
     name: MIT License
     url: https://opensource.org/licenses/MIT
-  version: 1.4.0
+  version: 1.5.0
 servers:
 - url: http://localhost:8080
   description: ⚠️ Only for local testing
@@ -68,6 +68,8 @@ paths:
           description: Invalid request
         "401":
           description: Invalid credentials
+        "429":
+          description: Too many login attempts
   /refresh:
     post:
       tags:
@@ -272,7 +274,7 @@ components:
       properties:
         description:
           maxLength: 255
-          minLength: 0
+          minLength: 1
           type: string
           description: Expense description
           example: Purchase of new computer
@@ -283,8 +285,6 @@ components:
           description: Expense amount
           example: 800.0
         category:
-          maxLength: 20
-          minLength: 0
           pattern: ^(Groceries|Leisure|Electronics|Utilities|Clothing|Health|Others)$
           type: string
           description: Expense category
@@ -330,21 +330,24 @@ components:
       properties:
         name:
           maxLength: 255
-          minLength: 0
+          minLength: 1
+          pattern: "^[\\p{L}\\s,.'-]*$"
           type: string
           description: User name
           example: John Doe
         email:
           maxLength: 255
-          minLength: 0
+          minLength: 1
           type: string
           description: User email
           example: john@doe.com
         password:
           maxLength: 255
-          minLength: 0
+          minLength: 8
+          pattern: "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@_#\\-$]).*$"
           type: string
           description: User password
+          example: MyPass_1234
       description: Register request body
     TokenResponse:
       type: object
@@ -381,6 +384,7 @@ components:
           minLength: 1
           type: string
           description: User password
+          example: MyPass_1234
       description: Login request body
     PageMetadata:
       type: object

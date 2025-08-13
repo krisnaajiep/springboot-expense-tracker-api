@@ -13,6 +13,7 @@ Version 1.0
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.ConflictException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
+import com.krisnaajiep.expensetrackerapi.handler.exception.TooManyRequestsException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
 import com.krisnaajiep.expensetrackerapi.util.ValidationUtility;
 import lombok.NonNull;
@@ -58,6 +59,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 }
         );
 
+        logger.error("Validation error occurred: " + errors);
+
         return new ResponseEntity<>(Map.of("errors", errors), headers, status);
     }
 
@@ -76,7 +79,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             return handleDateTimeParseException(dtpEx);
         }
 
-        logger.error("An error occurred while parsing the request body: " + ex.getMessage(), ex);
+        logger.error("An error occurred while parsing the request body: " + ex.getMessage());
 
         return super.handleHttpMessageNotReadable(ex, headers, status, request);
     }
@@ -136,5 +139,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<Object> handleNotFoundException(NotFoundException ex) {
         return new ResponseEntity<>(Map.of("message", ex.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Object> handleTooManyRequestsException(TooManyRequestsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .headers(ex.getHeaders())
+                .body(Map.of("message", ex.getMessage()));
     }
 }

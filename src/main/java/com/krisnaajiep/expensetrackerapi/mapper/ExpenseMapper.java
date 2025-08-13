@@ -17,12 +17,13 @@ import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedModel;
+import org.springframework.web.util.HtmlUtils;
 
 public class ExpenseMapper {
     public static Expense toExpense(User user, ExpenseRequestDto expenseRequestDto) {
         return Expense.builder()
                 .user(user)
-                .description(expenseRequestDto.getDescription())
+                .description(HtmlUtils.htmlEscape(expenseRequestDto.getDescription().trim(), "UTF-8"))
                 .amount(expenseRequestDto.getAmount())
                 .category(Expense.Category.fromDisplayName(expenseRequestDto.getCategory()))
                 .date(expenseRequestDto.getDate())
