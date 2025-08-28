@@ -26,14 +26,14 @@ public class PagedResponseDto<T> {
             example = """
                     [
                          {
-                           "id": 1,
+                           "id": "fa0f58de-6ed9-4502-9b34-016d614aa5ab",
                            "description": "Purchase of new computer",
                            "amount": 800.00,
                            "date": "2025-06-30",
                            "category": "Electronics"
                          },
                          {
-                           "id": 2,
+                           "id": "8ee69e72-11d2-495c-a9d5-5fe89a095e61",
                            "description": "Electricity and internet bill for the office",
                            "amount": 120.00,
                            "date": "2025-07-15",
