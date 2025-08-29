@@ -12,7 +12,7 @@ info:
   license:
     name: MIT License
     url: https://opensource.org/licenses/MIT
-  version: 1.5.0
+  version: 2.0.0
 servers:
 - url: http://localhost:8080
   description: ⚠️ Only for local testing
@@ -214,8 +214,8 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
+            format: uuid
       requestBody:
         content:
           application/json:
@@ -249,8 +249,8 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
+            format: uuid
       responses:
         "204":
           description: Expense deleted successfully
@@ -299,10 +299,10 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: string
           description: Expenses ID
-          format: int64
-          example: 1
+          format: uuid
+          example: fa0f58de-6ed9-4502-9b34-016d614aa5ab
         description:
           type: string
           description: Expenses description
@@ -414,12 +414,12 @@ components:
           type: array
           description: List of expenses
           example:
-          - id: 1
+          - id: fa0f58de-6ed9-4502-9b34-016d614aa5ab
             description: Purchase of new computer
             amount: 800.0
             date: 2025-06-30
             category: Electronics
-          - id: 2
+          - id: 8ee69e72-11d2-495c-a9d5-5fe89a095e61
             description: Electricity and internet bill for the office
             amount: 120.0
             date: 2025-07-15
