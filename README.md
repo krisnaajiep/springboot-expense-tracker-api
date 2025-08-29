@@ -1,6 +1,6 @@
 # Spring Boot Expense Tracker API
 
-![Current Version](https://img.shields.io/badge/version-1.5.0-green)
+![Current Version](https://img.shields.io/badge/version-2.0.0-green)
 [![Framework](https://img.shields.io/badge/framework-Spring_Boot-6DB33F?logo=springboot&logoColor=white)](https://spring.io/)
 [![Redis](https://img.shields.io/badge/cache-Redis-DC382D?logo=redis&logoColor=white)](https://redis.io/)
 
@@ -117,7 +117,7 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-1.5.0.jar
+   java -jar target/expense-tracker-api-2.0.0.jar
    ```
 
 ## Usage
