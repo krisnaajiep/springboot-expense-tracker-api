@@ -48,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Tag(name = "Expense", description = "Expense management endpoints")
 @SecurityRequirement(name = SwaggerConfig.SECURITY_SCHEME_NAME)
@@ -92,7 +93,7 @@ public class ExpenseController {
     )
     public ResponseEntity<ExpenseResponseDto> update(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long expenseId,
+            @PathVariable UUID expenseId,
             @Valid @RequestBody ExpenseRequestDto expenseRequestDto
     ) {
         Expense expense = ExpenseMapper.toExpense(userDetails.user(), expenseRequestDto);
@@ -110,7 +111,7 @@ public class ExpenseController {
     @DeleteMapping("/expenses/{expenseId}")
     public ResponseEntity<Void> delete(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long expenseId
+            @PathVariable UUID expenseId
     ) {
         expenseService.delete(userDetails.getId(), expenseId);
         return ResponseEntity.noContent().build();
