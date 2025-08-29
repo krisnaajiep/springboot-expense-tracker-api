@@ -16,12 +16,12 @@ import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.TooManyRequestsException;
 import com.krisnaajiep.expensetrackerapi.handler.exception.UnauthorizedException;
 import com.krisnaajiep.expensetrackerapi.util.ValidationUtility;
-import lombok.NonNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindingResult;
@@ -29,6 +29,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.format.DateTimeParseException;
@@ -99,8 +100,32 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(Map.of("message", message), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Object> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        StringBuilder messageBuilder = new StringBuilder("Invalid value for `" + ex.getName() + "`: " + ex.getValue());
+        Class<?> requiredType = ex.getRequiredType();
+        if (requiredType != null) {
+            if (requiredType.isEnum()) {
+                messageBuilder.append(", Expected one of: ");
+                Object[] enumConstants = requiredType.getEnumConstants();
+                for (int i = 0; i < enumConstants.length; i++) {
+                    if (i > 0) {
+                        messageBuilder.append(", ");
+                    }
+                    messageBuilder.append(enumConstants[i]);
+                }
+            } else {
+                messageBuilder.append(", Expected type: ").append(requiredType.getSimpleName());
+            }
+        }
+
+        logger.error("Invalid argument: " + ex.getMessage(), ex);
+
+        return new ResponseEntity<>(Map.of("message", messageBuilder.toString()), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleGeneralException(Exception ex) {
+    public ResponseEntity<Object> handleException(Exception ex) {
         logger.error("An unexpected error occurred: " + ex.getMessage(), ex);
         return new ResponseEntity<>(
                 Map.of("message", "Internal server error"),

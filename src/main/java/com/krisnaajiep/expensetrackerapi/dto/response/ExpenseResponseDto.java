@@ -16,13 +16,14 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
 @Schema(name = "ExpenseResponse", description = "Expense response body")
 public class ExpenseResponseDto {
-    @Schema(description = "Expenses ID", example = "1")
-    private Long id;
+    @Schema(description = "Expenses ID", example = "fa0f58de-6ed9-4502-9b34-016d614aa5ab")
+    private UUID id;
 
     @Schema(description = "Expenses description", example = "Purchase of new computer")
     private String description;

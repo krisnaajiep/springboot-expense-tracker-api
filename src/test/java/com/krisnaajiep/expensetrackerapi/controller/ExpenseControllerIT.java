@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -197,7 +198,7 @@ class ExpenseControllerIT {
     void testUpdate_Unauthorized() throws Exception {
         String accessToken = jwtUtility.generateToken(user.getId().toString(), " ");
 
-        mockMvc.perform(post("/expenses/1")
+        mockMvc.perform(post("/expenses/" + UUID.randomUUID())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
                 .content(objectMapper.writeValueAsString(expenseRequestDto))
@@ -221,7 +222,7 @@ class ExpenseControllerIT {
     void testUpdate_ValidationErrors() throws Exception {
         setInvalidExpenseRequest(); // Set up an invalid expense request for updating
 
-        mockMvc.perform(put("/expenses/1")
+        mockMvc.perform(put("/expenses/" + UUID.randomUUID())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
                 .content(objectMapper.writeValueAsString(invalidExpenseRequest))
@@ -253,7 +254,7 @@ class ExpenseControllerIT {
         setInvalidExpenseRequest(); // Set up an invalid expense request for updating
         invalidExpenseRequest.put("date", "Invalid date format");
 
-        mockMvc.perform(put("/expenses/1")
+        mockMvc.perform(put("/expenses/" + UUID.randomUUID())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.ALL)
                 .content(objectMapper.writeValueAsString(invalidExpenseRequest))
@@ -279,7 +280,7 @@ class ExpenseControllerIT {
     @Test
     void testUpdate_NotFound() throws Exception {
         setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
-        long nonExistentExpenseId = 999L; // Assuming expense with ID 999 does not exist
+        UUID nonExistentExpenseId = UUID.randomUUID(); // Assuming expense with this ID does not exist
 
         mockMvc.perform(put("/expenses/" + nonExistentExpenseId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -384,9 +385,29 @@ class ExpenseControllerIT {
     }
 
     @Test
+    void testDelete_InvalidExpenseId() throws Exception {
+        mockMvc.perform(delete("/expenses/1")
+                .accept(MediaType.ALL)
+                .header("Authorization", "Bearer " + accessToken)
+        ).andExpect(
+                status().isBadRequest()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals("Invalid value for `expenseId`: 1, Expected type: UUID", response.get("message"));
+        });
+    }
+
+    @Test
     void testDelete_NotFound() throws Exception {
-        // Assuming expense with ID 999 does not exist
-        long nonExistentExpenseId = 999L;
+        // Assuming expense with this ID does not exist
+        UUID nonExistentExpenseId = UUID.randomUUID();
 
         mockMvc.perform(delete("/expenses/" + nonExistentExpenseId)
                 .accept(MediaType.ALL)
@@ -467,6 +488,26 @@ class ExpenseControllerIT {
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
             assertEquals("Unauthorized", response.get("message"));
+        });
+    }
+
+    @Test
+    void testFindAll_InvalidFilter() throws Exception {
+        mockMvc.perform(get("/expenses?filter=invalid_filter")
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + accessToken)
+        ).andExpect(
+                status().isBadRequest()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertTrue(response.get("message").toString().contains("Invalid value for `filter`: invalid_filter"));
         });
     }
 
