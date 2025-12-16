@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.9</version>
+        <version>3.4.12</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.krisnaajiep</groupId>
@@ -29,7 +29,7 @@
     <properties>
         <java.version>21</java.version>
         <jjwt.version>0.12.6</jjwt.version>
-        <bcprov.version>1.78</bcprov.version>
+        <bcprov.version>1.78.1</bcprov.version>
     </properties>
 
     <dependencies>
@@ -283,10 +283,11 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>12.1.0</version>
+                <version>12.1.9</version>
                 <configuration>
                     <failBuildOnCVSS>8</failBuildOnCVSS>
                     <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
+                    <ossIndexServerId>ossindex</ossIndexServerId>
                 </configuration>
                 <executions>
                     <execution>
