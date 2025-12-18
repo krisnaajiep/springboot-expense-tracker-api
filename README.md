@@ -32,13 +32,14 @@ and user authentication in Spring Boot.
 ## Technologies Used
 
 - Java 21.0.6 LTS
-- Maven 3.9.9
+- Maven 3.9.11
 - H2 Database 2.3.232
 - Microsoft SQL Server 2022
-- Spring Boot 3.4.7
-- Lombok 1.18.38
+- Spring Boot 3.4.12
+- Lombok 1.18.42
 - [JJWT](https://github.com/jwtk/jjwt) 0.12.6
 - Redis 8.0.3
+- Flyway 10.20.1
 
 ## Features
 
@@ -53,6 +54,16 @@ and user authentication in Spring Boot.
 - **Revoke Tokens**: Invalidates all refresh tokens for the authenticated user using the `POST` method.
 - **Expenses Caching**: Speeds up repeated requests for filtered/paginated expenses using Redis with 60-minute TTL.
 - **Brute-force Protection**: Automatically jail IP addresses after repeated failed login attempts.
+
+## Database Migration
+
+Database migration is managed using [Flyway](https://flywaydb.org/).
+
+- The migration scripts are located in the `src/main/resources/db/migration` directory.
+- The initial migration script is defined in `V1__Create_initial_schema.sql`.
+- Migrations are automatically executed on application startup
+
+Before running the application, make sure the database exists.
 
 ## Setup
 
