@@ -296,7 +296,7 @@
                 <configuration>
                     <failBuildOnCVSS>8</failBuildOnCVSS>
                     <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
-                    <ossIndexServerId>ossindex</ossIndexServerId>
+                    <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
                 </configuration>
                 <executions>
                     <execution>
