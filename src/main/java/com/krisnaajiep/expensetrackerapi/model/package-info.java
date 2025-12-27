@@ -5,6 +5,7 @@
  *     <li>{@link com.krisnaajiep.expensetrackerapi.model.User} representing user entity</li>
  *     <li>{@link com.krisnaajiep.expensetrackerapi.model.RefreshToken} representing refresh token entity</li>
  *     <li>{@link com.krisnaajiep.expensetrackerapi.model.Expense} representing expense entity</li>
+ *     <li>{@link com.krisnaajiep.expensetrackerapi.model.ExpenseCategory} representing expense category entity</li>
  *     <li>{@link com.krisnaajiep.expensetrackerapi.model.Auditable} auditing fields</li>
  * </ul>
  *

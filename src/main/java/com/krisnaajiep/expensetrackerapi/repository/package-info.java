@@ -5,6 +5,7 @@
  *     <li>{@link com.krisnaajiep.expensetrackerapi.repository.UserRepository} for user account database operations</li>
  *     <li>{@link com.krisnaajiep.expensetrackerapi.model.RefreshToken} for refresh token database operations</li>
  *     <li>{@link com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository} for expense database operation</li>
+ *     <li>{@link com.krisnaajiep.expensetrackerapi.repository.ExpenseCategoryRepository} for expense category database operations</li>
  * </ul>
  *
  * @since 0.0.1
