@@ -14,6 +14,7 @@ import com.krisnaajiep.expensetrackerapi.dto.request.ExpenseRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseResponseDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.PagedResponseDto;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
+import com.krisnaajiep.expensetrackerapi.model.ExpenseCategory;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedModel;
@@ -25,7 +26,9 @@ public class ExpenseMapper {
                 .user(user)
                 .description(HtmlUtils.htmlEscape(expenseRequestDto.getDescription().trim(), "UTF-8"))
                 .amount(expenseRequestDto.getAmount())
-                .category(Expense.Category.fromDisplayName(expenseRequestDto.getCategory()))
+                .category(ExpenseCategory.builder()
+                        .id(expenseRequestDto.getCategoryId())
+                        .build())
                 .date(expenseRequestDto.getDate())
                 .build();
     }
@@ -35,7 +38,7 @@ public class ExpenseMapper {
                 expense.getId(),
                 expense.getDescription(),
                 expense.getAmount(),
-                expense.getCategory().getDisplayName(),
+                expense.getCategory().getName(),
                 expense.getDate()
         );
     }

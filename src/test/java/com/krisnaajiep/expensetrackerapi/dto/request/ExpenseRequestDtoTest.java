@@ -5,8 +5,6 @@ import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import jakarta.validation.ConstraintViolation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,7 +20,7 @@ class ExpenseRequestDtoTest extends RequestDtoTest<ExpenseRequestDto> {
     void setUp() {
         expenseRequestDto.setDescription("Weekly grocery shopping");
         expenseRequestDto.setAmount(new BigDecimal("150.00"));
-        expenseRequestDto.setCategory("Groceries");
+        expenseRequestDto.setCategoryId(1L);
         expenseRequestDto.setDate(LocalDate.now());
     }
 
@@ -30,28 +28,27 @@ class ExpenseRequestDtoTest extends RequestDtoTest<ExpenseRequestDto> {
     void testNullInputs_ValidationErrors() {
         expenseRequestDto.setDescription(null);
         expenseRequestDto.setAmount(null);
-        expenseRequestDto.setCategory(null);
+        expenseRequestDto.setCategoryId(null);
         expenseRequestDto.setDate(null);
 
         Set<ConstraintViolation<ExpenseRequestDto>> violations = validator.validate(expenseRequestDto);
 
+        System.out.println(violations);
+
         assertFalse(violations.isEmpty());
         assertHasViolation(violations, "description", ValidationMessages.NOT_BLANK_MESSAGE);
         assertHasViolation(violations, "amount", ValidationMessages.NOT_NULL_MESSAGE);
-        assertHasViolation(violations, "category", ValidationMessages.NOT_NULL_MESSAGE);
+        assertHasViolation(violations, "categoryId", ValidationMessages.NOT_NULL_MESSAGE);
         assertHasViolation(violations, "date", ValidationMessages.NOT_NULL_MESSAGE);
     }
 
     @Test
-    void testBlankInputs_ValidationErrors() {
+    void testBlankDescription_ValidationErrors() {
         expenseRequestDto.setDescription(" ");
-        expenseRequestDto.setCategory(" ");
-
         Set<ConstraintViolation<ExpenseRequestDto>> violations = validator.validate(expenseRequestDto);
 
         assertFalse(violations.isEmpty());
         assertHasViolation(violations, "description", ValidationMessages.NOT_BLANK_MESSAGE);
-        assertHasViolation(violations, "category", ValidationMessages.getValidationMessage("category.Pattern"));
     }
 
     @Test
@@ -82,12 +79,14 @@ class ExpenseRequestDtoTest extends RequestDtoTest<ExpenseRequestDto> {
     }
 
     @Test
-    void testInvalidPatternCategory_ValidationErrors() {
-        expenseRequestDto.setCategory("Invalid category");
+    void testNegativeCategoryID_ValidationErrors() {
+        expenseRequestDto.setCategoryId(-5L);
         Set<ConstraintViolation<ExpenseRequestDto>> violations = validator.validate(expenseRequestDto);
 
+        System.out.println(violations);
+
         assertFalse(violations.isEmpty());
-        assertHasViolation(violations, "category", ValidationMessages.getValidationMessage("category.Pattern"));
+        assertHasViolation(violations, "categoryId", ValidationMessages.POSITIVE_MESSAGE);
     }
 
     @Test
@@ -99,10 +98,8 @@ class ExpenseRequestDtoTest extends RequestDtoTest<ExpenseRequestDto> {
         assertHasViolation(violations, "date", ValidationMessages.PAST_OR_PRESENT_MESSAGE);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = { "Groceries", "Leisure", "Electronics", "Utilities", "Clothing", "Health", "Others"})
-    void testValidInputs_NoErrors(String category) {
-        expenseRequestDto.setCategory(category);
+    @Test
+    void testValidInputs_NoErrors() {
         Set<ConstraintViolation<ExpenseRequestDto>> violations = validator.validate(expenseRequestDto);
         assertTrue(violations.isEmpty());
     }

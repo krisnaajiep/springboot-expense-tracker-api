@@ -6,7 +6,9 @@ import com.krisnaajiep.expensetrackerapi.dto.request.ExpenseRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseResponseDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.PagedResponseDto;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
+import com.krisnaajiep.expensetrackerapi.model.ExpenseCategory;
 import com.krisnaajiep.expensetrackerapi.model.User;
+import com.krisnaajiep.expensetrackerapi.repository.ExpenseCategoryRepository;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
@@ -25,12 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -42,6 +39,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ExpenseControllerIT {
     @Autowired
     private ExpenseRepository expenseRepository;
+
+    @Autowired
+    private ExpenseCategoryRepository categoryRepository;
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
@@ -61,17 +61,32 @@ class ExpenseControllerIT {
     private User user;
     private Expense anotherExpense;
     private String accessToken;
+    private List<ExpenseCategory> categories;
 
     private final ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto();
     private final Map<String, Object> invalidExpenseRequest = new HashMap<>();
     private final List<Expense> expenses = new ArrayList<>();
+    private final Random random = new Random();
 
     @BeforeEach
     void setUp() {
         // Clean up the database before each test
         expenseRepository.deleteAll();
+        categoryRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
+
+        categories = categoryRepository.saveAll(
+                List.of(
+                        ExpenseCategory.builder().name("Groceries").build(),
+                        ExpenseCategory.builder().name("Leisure").build(),
+                        ExpenseCategory.builder().name("Electronics").build(),
+                        ExpenseCategory.builder().name("Utilities").build(),
+                        ExpenseCategory.builder().name("Clothing").build(),
+                        ExpenseCategory.builder().name("Health").build(),
+                        ExpenseCategory.builder().name("Others").build()
+                )
+        );
 
         user = User.builder()
                 .name("Test User")
@@ -129,8 +144,8 @@ class ExpenseControllerIT {
             assertEquals(ValidationMessages.NOT_BLANK_MESSAGE, ((Map<?, ?>) response.get("errors")).get("description"));
             assertEquals(ValidationMessages.DECIMAL_MIN_MESSAGE, ((Map<?, ?>) response.get("errors")).get("amount"));
             assertEquals(
-                    ValidationMessages.getValidationMessage("category.Pattern"),
-                    ((Map<?, ?>) response.get("errors")).get("category")
+                    ValidationMessages.POSITIVE_MESSAGE,
+                    ((Map<?, ?>) response.get("errors")).get("categoryId")
             );
             assertEquals(ValidationMessages.PAST_OR_PRESENT_MESSAGE, ((Map<?, ?>) response.get("errors")).get("date"));
         });
@@ -165,11 +180,36 @@ class ExpenseControllerIT {
     }
 
     @Test
+    void testSave_CategoryNotFound() throws Exception {
+        setSaveExpenseRequest(9999L); // Set up the request DTO with a non-existent category ID
+
+        mockMvc.perform(post("/expenses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.ALL)
+                .content(objectMapper.writeValueAsString(expenseRequestDto))
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isNotFound()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals(
+                    "Expense category not found with ID: 9999",
+                    response.get("message")
+            );
+        });
+    }
+
+    @Test
     void testSave_Success() throws Exception {
-        expenseRequestDto.setDescription("Weekly grocery shopping");
-        expenseRequestDto.setCategory("Groceries");
-        expenseRequestDto.setAmount(new BigDecimal("150.00"));
-        expenseRequestDto.setDate(LocalDate.now());
+        ExpenseCategory category = getRandomCategory(); // Get a random category
+        setSaveExpenseRequest(category.getId()); // Set up the request DTO for saving an expense
 
         mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -189,7 +229,7 @@ class ExpenseControllerIT {
             assertNotNull(response.getId());
             assertEquals(expenseRequestDto.getDescription(), response.getDescription());
             assertEquals(expenseRequestDto.getAmount(), response.getAmount());
-            assertEquals(expenseRequestDto.getCategory(), response.getCategory());
+            assertEquals(category.getName(), response.getCategory());
             assertEquals(expenseRequestDto.getDate(), response.getDate());
         });
     }
@@ -242,8 +282,8 @@ class ExpenseControllerIT {
             assertEquals(ValidationMessages.NOT_BLANK_MESSAGE, ((Map<?, ?>) response.get("errors")).get("description"));
             assertEquals(ValidationMessages.DECIMAL_MIN_MESSAGE, ((Map<?, ?>) response.get("errors")).get("amount"));
             assertEquals(
-                    ValidationMessages.getValidationMessage("category.Pattern"),
-                    ((Map<?, ?>) response.get("errors")).get("category")
+                    ValidationMessages.POSITIVE_MESSAGE,
+                    ((Map<?, ?>) response.get("errors")).get("categoryId")
             );
             assertEquals(ValidationMessages.PAST_OR_PRESENT_MESSAGE, ((Map<?, ?>) response.get("errors")).get("date"));
         });
@@ -278,8 +318,8 @@ class ExpenseControllerIT {
     }
 
     @Test
-    void testUpdate_NotFound() throws Exception {
-        setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
+    void testUpdate_ExpenseNotFound() throws Exception {
+        setUpdateExpenseRequest(getRandomCategory().getId()); // Set up the request DTO for updating an expense
         UUID nonExistentExpenseId = UUID.randomUUID(); // Assuming expense with this ID does not exist
 
         mockMvc.perform(put("/expenses/" + nonExistentExpenseId)
@@ -303,8 +343,45 @@ class ExpenseControllerIT {
     }
 
     @Test
+    void testUpdate_CategoryNotFound() throws Exception {
+        setUpdateExpenseRequest(9999L); // Set up the request DTO with a non-existent category ID
+
+        Expense expense = Expense.builder()
+                .description("Old expense")
+                .category(getRandomCategory())
+                .amount(new BigDecimal("150.00"))
+                .date(LocalDate.now())
+                .user(user)
+                .build();
+
+        Expense savedExpense = expenseRepository.save(expense);
+
+        mockMvc.perform(put("/expenses/" + savedExpense.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.ALL)
+                .content(objectMapper.writeValueAsString(expenseRequestDto))
+                .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
+        ).andExpect(
+                status().isNotFound()
+        ).andDo(result -> {
+            Map<String, Object> response = objectMapper.readValue(
+                    result.getResponse().getContentAsString(),
+                    new TypeReference<>() {
+                    }
+            );
+
+            assertNotNull(response);
+            assertTrue(response.containsKey("message"));
+            assertEquals(
+                    "Expense category not found with ID: 9999",
+                    response.get("message")
+            );
+        });
+    }
+
+    @Test
     void testUpdate_Forbidden() throws Exception {
-        setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
+        setUpdateExpenseRequest(getRandomCategory().getId()); // Set up the request DTO for updating an expense
         setAnotherExpense(); // Set up another expense for a different user
 
         mockMvc.perform(put("/expenses/" + anotherExpense.getId())
@@ -329,11 +406,12 @@ class ExpenseControllerIT {
 
     @Test
     void testUpdate_Success() throws Exception {
-        setUpdateExpenseRequest(); // Set up the request DTO for updating an expense
+        ExpenseCategory newCategory = getRandomCategory(); // Get a random category for updating
+        setUpdateExpenseRequest(newCategory.getId()); // Set up the request DTO for updating an expense
 
         Expense expense = Expense.builder()
                 .description("New expense")
-                .category(Expense.Category.fromDisplayName("Others"))
+                .category(getRandomCategory())
                 .amount(new BigDecimal("300.00"))
                 .date(LocalDate.now())
                 .user(user)
@@ -359,7 +437,7 @@ class ExpenseControllerIT {
             assertEquals(savedExpense.getId(), response.getId());
             assertEquals(expenseRequestDto.getDescription(), response.getDescription());
             assertEquals(expenseRequestDto.getAmount(), response.getAmount());
-            assertEquals(expenseRequestDto.getCategory(), response.getCategory());
+            assertEquals(newCategory.getName(), response.getCategory());
             assertEquals(expenseRequestDto.getDate(), response.getDate());
         });
     }
@@ -453,7 +531,7 @@ class ExpenseControllerIT {
     void testDelete_Success() throws Exception {
         Expense expense = Expense.builder()
                 .description("Expense to be deleted")
-                .category(Expense.Category.fromDisplayName("Clothing"))
+                .category(getRandomCategory())
                 .amount(new BigDecimal("100.00"))
                 .date(LocalDate.now())
                 .user(user)
@@ -556,14 +634,21 @@ class ExpenseControllerIT {
 
     private void setInvalidExpenseRequest() {
         invalidExpenseRequest.put("description", null);
-        invalidExpenseRequest.put("category", "Invalid");
+        invalidExpenseRequest.put("categoryId", -5L);
         invalidExpenseRequest.put("amount", new BigDecimal(-100));
         invalidExpenseRequest.put("date", LocalDate.now().plusDays(1));
     }
 
-    private void setUpdateExpenseRequest() {
+    private void setSaveExpenseRequest(Long categoryId) {
+        expenseRequestDto.setDescription("Dinner at a restaurant");
+        expenseRequestDto.setCategoryId(categoryId);
+        expenseRequestDto.setAmount(new BigDecimal("75.50"));
+        expenseRequestDto.setDate(LocalDate.now());
+    }
+
+    private void setUpdateExpenseRequest(Long categoryId) {
         expenseRequestDto.setDescription("Updated expense description");
-        expenseRequestDto.setCategory("Others");
+        expenseRequestDto.setCategoryId(categoryId);
         expenseRequestDto.setAmount(new BigDecimal("300.00"));
         expenseRequestDto.setDate(LocalDate.now().minusDays(1));
     }
@@ -579,7 +664,7 @@ class ExpenseControllerIT {
 
         anotherExpense = Expense.builder()
                 .description("Another expense")
-                .category(Expense.Category.fromDisplayName("Utilities"))
+                .category(getRandomCategory())
                 .amount(new BigDecimal("200.00"))
                 .date(LocalDate.now())
                 .user(anotherUser)
@@ -602,7 +687,7 @@ class ExpenseControllerIT {
             Expense expense = Expense.builder()
                     .description("Expense " + (i + 1))
                     .amount(new BigDecimal(125 + i))
-                    .category(Expense.Category.fromDisplayName("Others"))
+                    .category(getRandomCategory())
                     .date(date)
                     .user(user)
                     .build();
@@ -610,5 +695,10 @@ class ExpenseControllerIT {
         }
 
         expenseRepository.saveAll(expenses);
+    }
+
+    private ExpenseCategory getRandomCategory() {
+        Long categoryId = categories.get(random.nextInt(categories.size())).getId(); // Get a random category ID
+        return categoryRepository.findById(categoryId).orElse(null); // Fetch the category from the repository
     }
 }

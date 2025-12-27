@@ -4,7 +4,9 @@ import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseResponseDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.PagedResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
+import com.krisnaajiep.expensetrackerapi.model.ExpenseCategory;
 import com.krisnaajiep.expensetrackerapi.model.User;
+import com.krisnaajiep.expensetrackerapi.repository.ExpenseCategoryRepository;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,12 +38,16 @@ class ExpenseServiceTest {
     private ExpenseRepository expenseRepository;
 
     @Mock
+    private ExpenseCategoryRepository categoryRepository;
+
+    @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
     @InjectMocks
     private ExpenseService expenseService;
 
     private final User user = new User();
+    private final ExpenseCategory category = new ExpenseCategory();
     private final Expense expense = new Expense();
     private final List<Expense> expenses = new ArrayList<>();
 
@@ -52,16 +58,30 @@ class ExpenseServiceTest {
         user.setPassword(StringUtility.generateRandomString(8));
         user.setName("John Doe");
 
+        category.setId(1L);
+        category.setName("Others");
+
         expense.setId(UUID.randomUUID());
         expense.setDescription("Test Expense");
         expense.setAmount(new BigDecimal("100.00"));
-        expense.setCategory(Expense.Category.fromDisplayName("Others"));
+        expense.setCategory(category);
         expense.setDate(LocalDate.now());
         expense.setUser(user);
     }
 
     @Test
+    void testSave_CategoryNotFound() {
+        when(categoryRepository.findById(category.getId())).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> expenseService.save(expense));
+
+        verify(categoryRepository, times(1)).findById(category.getId());
+        verifyNoMoreInteractions(expenseRepository);
+    }
+
+    @Test
     void testSave_Success() {
+        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
         when(expenseRepository.save(expense)).thenReturn(expense);
         when(redisTemplate.keys(anyString())).thenReturn(Set.of());
 
@@ -71,20 +91,33 @@ class ExpenseServiceTest {
         assertEquals(expense.getId(), response.getId());
         assertEquals(expense.getDescription(), response.getDescription());
         assertEquals(expense.getAmount(), response.getAmount());
-        assertEquals(expense.getCategory().getDisplayName(), response.getCategory());
+        assertEquals(expense.getCategory().getName(), response.getCategory());
         assertEquals(expense.getDate(), response.getDate());
 
         verify(expenseRepository, times(1)).save(expense);
     }
 
     @Test
-    void testUpdate_NotFound() {
+    void testUpdate_ExpenseNotFound() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> expenseService.update(expense.getId(), expense));
 
         verify(expenseRepository, times(1)).findById(expense.getId());
         verifyNoMoreInteractions(expenseRepository);
+    }
+
+    @Test
+    void testUpdate_CategoryNotFound() {
+        when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+        when(categoryRepository.findById(category.getId())).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> expenseService.update(expense.getId(), expense));
+
+        verify(expenseRepository, times(1)).findById(expense.getId());
+        verify(categoryRepository, times(1)).findById(category.getId());
+        verifyNoMoreInteractions(expenseRepository);
+        verifyNoMoreInteractions(categoryRepository);
     }
 
     @Test
@@ -100,12 +133,13 @@ class ExpenseServiceTest {
                 .id(UUID.randomUUID())
                 .description("Another Expense")
                 .amount(new BigDecimal("200.00"))
-                .category(Expense.Category.fromDisplayName("Others"))
+                .category(category)
                 .date(LocalDate.now())
                 .user(anotherUser)
                 .build();
 
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
 
         assertThrows(AccessDeniedException.class, () -> expenseService.update(expense.getId(), anotherExpense));
 
@@ -116,6 +150,7 @@ class ExpenseServiceTest {
     @Test
     void testUpdateSuccess() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
         when(redisTemplate.keys(anyString())).thenReturn(Set.of());
 
         ExpenseResponseDto response = expenseService.update(expense.getId(), expense);
@@ -124,7 +159,7 @@ class ExpenseServiceTest {
         assertEquals(expense.getId(), response.getId());
         assertEquals(expense.getDescription(), response.getDescription());
         assertEquals(expense.getAmount(), response.getAmount());
-        assertEquals(expense.getCategory().getDisplayName(), response.getCategory());
+        assertEquals(expense.getCategory().getName(), response.getCategory());
         assertEquals(expense.getDate(), response.getDate());
 
         verify(expenseRepository, times(1)).findById(expense.getId());
@@ -202,7 +237,7 @@ class ExpenseServiceTest {
             assertEquals(expense.getId(), dto.getId());
             assertEquals(expense.getDescription(), dto.getDescription());
             assertEquals(expense.getAmount(), dto.getAmount());
-            assertEquals(expense.getCategory().getDisplayName(), dto.getCategory());
+            assertEquals(expense.getCategory().getName(), dto.getCategory());
             assertEquals(expense.getDate(), dto.getDate());
         }
 
@@ -216,7 +251,7 @@ class ExpenseServiceTest {
                     .id(UUID.randomUUID())
                     .description("Expense " + (i + 1))
                     .amount(new BigDecimal("100.00"))
-                    .category(Expense.Category.fromDisplayName("Others"))
+                    .category(category)
                     .date(LocalDate.now())
                     .user(user)
                     .build();

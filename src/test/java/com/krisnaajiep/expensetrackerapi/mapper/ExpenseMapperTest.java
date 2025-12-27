@@ -20,7 +20,7 @@ class ExpenseMapperTest {
     void setUp() {
         expenseRequestDto.setDescription("  Weekly grocery shopping  ");
         expenseRequestDto.setAmount(new BigDecimal("150.00"));
-        expenseRequestDto.setCategory("Groceries");
+        expenseRequestDto.setCategoryId(1L);
         expenseRequestDto.setDate(LocalDate.now());
     }
 
