@@ -13,6 +13,7 @@ import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.security.service.LoginAttemptService;
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
+import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,16 +73,16 @@ class AuthServiceTest {
     private static final String ACCESS_TOKEN = StringUtility.generateSecureToken(32);
     private static final String REFRESH_TOKEN = StringUtility.generateSecureToken(32);
     private static final String ENCODED_REFRESH_TOKEN = DigestUtils.sha256Hex(REFRESH_TOKEN);
-    private static final String PASSWORD = StringUtility.generateRandomString(8);
+    private static final String PASSWORD = TestDataGenerator.generatePassword();
     private static final String ENCODED_PASSWORD = StringUtility.generateRandomString(8);
     private static final long REFRESH_TOKEN_EXP = 86400000;
     private static final String CLIENT_IP = "127.0.0.1";
 
     @BeforeEach
     void setUp() {
-        user.setId(1L);
-        user.setName("John Doe");
-        user.setEmail("john@doe.com");
+        user.setId(TestDataGenerator.generateRandomNumber(1L, 1000L));
+        user.setName(TestDataGenerator.generateFullName());
+        user.setEmail(TestDataGenerator.generateEmail());
         user.setPassword(ENCODED_PASSWORD);
 
         refreshToken.setToken(ENCODED_REFRESH_TOKEN);

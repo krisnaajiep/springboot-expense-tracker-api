@@ -14,6 +14,7 @@ import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
+import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,7 +66,6 @@ class ExpenseControllerIT {
 
     private final ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto();
     private final Map<String, Object> invalidExpenseRequest = new HashMap<>();
-    private final List<Expense> expenses = new ArrayList<>();
     private final Random random = new Random();
 
     @BeforeEach
@@ -88,13 +88,7 @@ class ExpenseControllerIT {
                 )
         );
 
-        user = User.builder()
-                .name("Test User")
-                .email("test@user.com")
-                .password(StringUtility.generatePasswordForTest())
-                .build();
-
-        user = userRepository.save(user);
+        user = createUser(); // Create a test user
 
         accessToken = jwtUtility.generateToken(user.getId().toString(), user.getEmail());
     }
@@ -181,7 +175,7 @@ class ExpenseControllerIT {
 
     @Test
     void testSave_CategoryNotFound() throws Exception {
-        setSaveExpenseRequest(9999L); // Set up the request DTO with a non-existent category ID
+        setSaveExpenseRequest(TestDataGenerator.generateRandomNumber(1000, 5000)); // Set up the request DTO with a non-existent category ID
 
         mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -200,7 +194,7 @@ class ExpenseControllerIT {
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
             assertEquals(
-                    "Expense category not found with ID: 9999",
+                    "Expense category not found with ID: " + expenseRequestDto.getCategoryId(),
                     response.get("message")
             );
         });
@@ -344,13 +338,13 @@ class ExpenseControllerIT {
 
     @Test
     void testUpdate_CategoryNotFound() throws Exception {
-        setUpdateExpenseRequest(9999L); // Set up the request DTO with a non-existent category ID
+        setUpdateExpenseRequest(TestDataGenerator.generateRandomNumber(1000, 5000)); // Set up the request DTO with a non-existent category ID
 
         Expense expense = Expense.builder()
-                .description("Old expense")
+                .description(TestDataGenerator.generateDescription(10))
                 .category(getRandomCategory())
-                .amount(new BigDecimal("150.00"))
-                .date(LocalDate.now())
+                .amount(TestDataGenerator.generateAmount(10, 1000))
+                .date(TestDataGenerator.generateDate(-30, 0))
                 .user(user)
                 .build();
 
@@ -373,7 +367,7 @@ class ExpenseControllerIT {
             assertNotNull(response);
             assertTrue(response.containsKey("message"));
             assertEquals(
-                    "Expense category not found with ID: 9999",
+                    "Expense category not found with ID: " + expenseRequestDto.getCategoryId(),
                     response.get("message")
             );
         });
@@ -382,7 +376,8 @@ class ExpenseControllerIT {
     @Test
     void testUpdate_Forbidden() throws Exception {
         setUpdateExpenseRequest(getRandomCategory().getId()); // Set up the request DTO for updating an expense
-        setAnotherExpense(); // Set up another expense for a different user
+        User anotherUser = createUser(); // Create another user
+        anotherExpense = createExpense(anotherUser); // Create an expense for the other user
 
         mockMvc.perform(put("/expenses/" + anotherExpense.getId())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -410,10 +405,10 @@ class ExpenseControllerIT {
         setUpdateExpenseRequest(newCategory.getId()); // Set up the request DTO for updating an expense
 
         Expense expense = Expense.builder()
-                .description("New expense")
+                .description(TestDataGenerator.generateDescription(10))
                 .category(getRandomCategory())
-                .amount(new BigDecimal("300.00"))
-                .date(LocalDate.now())
+                .amount(TestDataGenerator.generateAmount(10, 1000))
+                .date(TestDataGenerator.generateDate(-30, 0))
                 .user(user)
                 .build();
 
@@ -507,7 +502,8 @@ class ExpenseControllerIT {
 
     @Test
     void testDelete_Forbidden() throws Exception {
-        setAnotherExpense(); // Set up another expense for a different user
+        User anotherUser = createUser(); // Create another user
+        anotherExpense = createExpense(anotherUser); // Create an expense for the other user
 
         mockMvc.perform(delete("/expenses/" + anotherExpense.getId())
                 .accept(MediaType.ALL)
@@ -591,9 +587,9 @@ class ExpenseControllerIT {
 
     @Test
     void testFindAll_Success() throws Exception {
-        setExpenses();
+        createExpenses(user); // Create multiple expenses for the user
 
-        mockMvc.perform(get("/expenses?page=1&size=15&filter=past_week")
+        mockMvc.perform(get("/expenses?page=0&size=15&filter=past_week")
                 .accept(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + accessToken) // Assuming accessToken is set
         ).andExpect(
@@ -615,13 +611,14 @@ class ExpenseControllerIT {
                     }
             );
 
-            assertNotNull(response);
+            assertNotNull(response.getContent());
+            assertNotNull(response.getMetadata());
 
             assertFalse(response.getContent().isEmpty());
-            assertEquals(5, response.getContent().size());
+            assertEquals(15, response.getContent().size());
 
             assertNotNull(response.getMetadata());
-            assertEquals(20, response.getMetadata().totalElements());
+            assertEquals(15, response.getMetadata().totalElements());
 
             Optional<ExpenseResponseDto> notPastWeekExpense = response.getContent().stream()
                     .filter(exp ->
@@ -634,49 +631,53 @@ class ExpenseControllerIT {
 
     private void setInvalidExpenseRequest() {
         invalidExpenseRequest.put("description", null);
-        invalidExpenseRequest.put("categoryId", -5L);
-        invalidExpenseRequest.put("amount", new BigDecimal(-100));
-        invalidExpenseRequest.put("date", LocalDate.now().plusDays(1));
+        invalidExpenseRequest.put("categoryId", TestDataGenerator.generateRandomNumber(-1000, -1));
+        invalidExpenseRequest.put("amount", TestDataGenerator.generateAmount(-1000, 0));
+        invalidExpenseRequest.put("date", TestDataGenerator.generateDate(1, 30));
     }
 
     private void setSaveExpenseRequest(Long categoryId) {
-        expenseRequestDto.setDescription("Dinner at a restaurant");
+        expenseRequestDto.setDescription(TestDataGenerator.generateDescription(10));
         expenseRequestDto.setCategoryId(categoryId);
-        expenseRequestDto.setAmount(new BigDecimal("75.50"));
-        expenseRequestDto.setDate(LocalDate.now());
+        expenseRequestDto.setAmount(TestDataGenerator.generateAmount(10, 1000));
+        expenseRequestDto.setDate(TestDataGenerator.generateDate(-30, 0));
     }
 
     private void setUpdateExpenseRequest(Long categoryId) {
-        expenseRequestDto.setDescription("Updated expense description");
+        expenseRequestDto.setDescription(TestDataGenerator.generateDescription(10));
         expenseRequestDto.setCategoryId(categoryId);
-        expenseRequestDto.setAmount(new BigDecimal("300.00"));
-        expenseRequestDto.setDate(LocalDate.now().minusDays(1));
+        expenseRequestDto.setAmount(TestDataGenerator.generateAmount(10, 1000));
+        expenseRequestDto.setDate(TestDataGenerator.generateDate(-30, 0));
     }
 
-    private void setAnotherExpense() {
-        User anotherUser = User.builder()
-                .name("Another User")
-                .email("another@user.com")
-                .password(StringUtility.generatePasswordForTest())
+    private User createUser() {
+        User user = User.builder()
+                .name(TestDataGenerator.generateFullName())
+                .email(TestDataGenerator.generateEmail())
+                .password(StringUtility.generateRandomString(8))
                 .build();
 
-        anotherUser = userRepository.save(anotherUser);
+        return userRepository.save(user);
+    }
 
+    private Expense createExpense(User user) {
         anotherExpense = Expense.builder()
-                .description("Another expense")
+                .description(TestDataGenerator.generateDescription(10))
                 .category(getRandomCategory())
-                .amount(new BigDecimal("200.00"))
-                .date(LocalDate.now())
-                .user(anotherUser)
+                .amount(TestDataGenerator.generateAmount(10, 1000))
+                .date(TestDataGenerator.generateDate(-30, 0))
+                .user(user)
                 .build();
 
-        anotherExpense = expenseRepository.save(anotherExpense);
+        return expenseRepository.save(anotherExpense);
     }
 
-    private void setExpenses() {
+    private void createExpenses(User user) {
+        List<Expense> expenses = new ArrayList<>();
+
         for (int i = 0; i < 100; i++) {
             LocalDate date;
-            if (i < 20) {
+            if (i < 15) {
                 date = LocalDate.now().minusDays(6);
             } else if (i < 60) {
                 date = LocalDate.now().minusDays(20);
@@ -685,12 +686,13 @@ class ExpenseControllerIT {
             }
 
             Expense expense = Expense.builder()
-                    .description("Expense " + (i + 1))
-                    .amount(new BigDecimal(125 + i))
+                    .description(TestDataGenerator.generateDescription(10))
+                    .amount(TestDataGenerator.generateAmount(10, 1000))
                     .category(getRandomCategory())
                     .date(date)
                     .user(user)
                     .build();
+
             expenses.add(expense);
         }
 

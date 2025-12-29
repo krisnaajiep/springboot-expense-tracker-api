@@ -26,8 +26,4 @@ public class StringUtility {
     public static String generateRandomString(int length) {
         return RandomStringUtils.insecure().nextAlphanumeric(length);
     }
-
-    public static String generatePasswordForTest() {
-        return generateRandomString(4) + "Ab_1";
-    }
 }

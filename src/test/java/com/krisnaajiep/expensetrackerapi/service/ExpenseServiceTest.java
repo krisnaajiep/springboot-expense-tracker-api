@@ -9,6 +9,7 @@ import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseCategoryRepository;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
+import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,8 +22,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +46,7 @@ class ExpenseServiceTest {
     private ExpenseService expenseService;
 
     private final User user = new User();
+    private final User anotherUser = new User();
     private final ExpenseCategory category = new ExpenseCategory();
     private final Expense expense = new Expense();
     private final List<Expense> expenses = new ArrayList<>();
@@ -54,18 +54,23 @@ class ExpenseServiceTest {
     @BeforeEach
     void setUp() {
         user.setId(1L);
-        user.setEmail("john@doe");
+        user.setEmail(TestDataGenerator.generateEmail());
         user.setPassword(StringUtility.generateRandomString(8));
-        user.setName("John Doe");
+        user.setName(TestDataGenerator.generateFullName());
 
-        category.setId(1L);
+        anotherUser.setId(2L);
+        anotherUser.setEmail(TestDataGenerator.generateEmail());
+        anotherUser.setPassword(StringUtility.generateRandomString(8));
+        anotherUser.setName(TestDataGenerator.generateFullName());
+
+        category.setId(TestDataGenerator.generateRandomNumber(1, 1000));
         category.setName("Others");
 
         expense.setId(UUID.randomUUID());
-        expense.setDescription("Test Expense");
-        expense.setAmount(new BigDecimal("100.00"));
+        expense.setDescription(TestDataGenerator.generateDescription(10));
+        expense.setAmount(TestDataGenerator.generateAmount(10, 1000));
         expense.setCategory(category);
-        expense.setDate(LocalDate.now());
+        expense.setDate(TestDataGenerator.generateDate(-30, 0));
         expense.setUser(user);
     }
 
@@ -122,19 +127,12 @@ class ExpenseServiceTest {
 
     @Test
     void testUpdate_AccessDenied() {
-        User anotherUser = User.builder()
-                .id(2L)
-                .email("jane@doe")
-                .password(StringUtility.generateRandomString(8))
-                .name("Jane Doe")
-                .build();
-
         Expense anotherExpense = Expense.builder()
                 .id(UUID.randomUUID())
-                .description("Another Expense")
-                .amount(new BigDecimal("200.00"))
+                .description(TestDataGenerator.generateDescription(10))
+                .amount(TestDataGenerator.generateAmount(10, 100))
                 .category(category)
-                .date(LocalDate.now())
+                .date(TestDataGenerator.generateDate(-30, 0))
                 .user(anotherUser)
                 .build();
 
@@ -176,13 +174,6 @@ class ExpenseServiceTest {
 
     @Test
     void testDelete_AccessDenied() {
-        User anotherUser = User.builder()
-                .id(2L)
-                .email("jane@doe")
-                .password(StringUtility.generateRandomString(8))
-                .name("Jane Doe")
-                .build();
-
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
 
         assertThrows(AccessDeniedException.class, () -> expenseService.delete(anotherUser.getId(), expense.getId()));
@@ -249,10 +240,10 @@ class ExpenseServiceTest {
         for (int i = 0; i < 100; i++) {
             Expense expense = Expense.builder()
                     .id(UUID.randomUUID())
-                    .description("Expense " + (i + 1))
-                    .amount(new BigDecimal("100.00"))
+                    .description(TestDataGenerator.generateDescription(10))
+                    .amount(TestDataGenerator.generateAmount(10, 1000))
                     .category(category)
-                    .date(LocalDate.now())
+                    .date(TestDataGenerator.generateDate(-30, 0))
                     .user(user)
                     .build();
             expenses.add(expense);

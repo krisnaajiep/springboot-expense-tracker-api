@@ -7,6 +7,7 @@ import com.krisnaajiep.expensetrackerapi.model.ExpenseCategory;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseCategoryRepository;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
+import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,10 +68,10 @@ class ExpenseServiceCachingIT {
             Expense expense = Expense.builder()
                     .id(UUID.randomUUID())
                     .user(user)
-                    .description("Expense " + (i + 1))
-                    .amount(new BigDecimal("100.00").multiply(new BigDecimal((i + 1))))
+                    .description(TestDataGenerator.generateDescription(10))
+                    .amount(TestDataGenerator.generateAmount(10, 1000))
                     .category(category)
-                    .date(LocalDate.now())
+                    .date(TestDataGenerator.generateDate(-10, 0))
                     .build();
             expenses.add(expense);
         }
