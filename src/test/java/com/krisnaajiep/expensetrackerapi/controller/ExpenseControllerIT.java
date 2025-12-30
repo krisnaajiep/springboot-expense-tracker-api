@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -59,6 +60,9 @@ class ExpenseControllerIT {
     @Autowired
     private JwtUtility jwtUtility;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
     private User user;
     private Expense anotherExpense;
     private String accessToken;
@@ -70,6 +74,9 @@ class ExpenseControllerIT {
 
     @BeforeEach
     void setUp() {
+        // Clear Redis cache
+        Objects.requireNonNull(redisTemplate.getConnectionFactory()).getConnection().serverCommands().flushDb();
+
         // Clean up the database before each test
         expenseRepository.deleteAll();
         categoryRepository.deleteAll();

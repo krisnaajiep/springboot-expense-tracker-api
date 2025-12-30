@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,8 +54,8 @@ class ExpenseServiceCachingIT {
 
     @BeforeEach
     void setUp() {
-        // Clear cache
-        redisTemplate.delete(redisTemplate.keys(keysPattern));
+        // Clear Redis cache
+        Objects.requireNonNull(redisTemplate.getConnectionFactory()).getConnection().serverCommands().flushDb();
 
         // Set user ID
         user.setId(1L);

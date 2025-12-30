@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -29,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -62,6 +64,9 @@ class AuthControllerIT {
     @Autowired
     private AuthProperties authProperties;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
     private final RegisterRequestDto registerRequestDto = new RegisterRequestDto();
     private final LoginRequestDto loginRequestDto = new LoginRequestDto();
     private final RefreshTokenRequestDto refreshTokenRequestDto = new RefreshTokenRequestDto();
@@ -72,6 +77,9 @@ class AuthControllerIT {
 
     @BeforeEach
     void setUp() {
+        // Clear Redis cache
+        Objects.requireNonNull(redisTemplate.getConnectionFactory()).getConnection().serverCommands().flushDb();
+
         // Clean up the database before each test
         expenseRepository.deleteAll();
         refreshTokenRepository.deleteAll();
