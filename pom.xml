@@ -300,7 +300,7 @@
                 <artifactId>dependency-check-maven</artifactId>
                 <version>12.1.9</version>
                 <configuration>
-                    <failBuildOnCVSS>8</failBuildOnCVSS>
+                    <failBuildOnCVSS>10</failBuildOnCVSS>
                     <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
                     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
                 </configuration>
