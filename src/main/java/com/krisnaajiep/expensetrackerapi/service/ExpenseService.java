@@ -18,7 +18,6 @@ import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.mapper.ExpenseMapper;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.model.ExpenseCategory;
-import com.krisnaajiep.expensetrackerapi.repository.ExpenseCategoryRepository;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -50,14 +49,7 @@ import java.util.UUID;
 public class ExpenseService {
     private static final Logger log = LoggerFactory.getLogger(ExpenseService.class);
 
-    /**
-     * Repository for managing persistence operations related to the ExpenseCategory entity.
-     * Provides methods to perform CRUD operations and custom queries.
-     * <p>
-     * This repository is used by the ExpenseService to interact with the database,
-     * such as retrieving ExpenseCategory entities when creating or updating expenses.
-     */
-    private final ExpenseCategoryRepository categoryRepository;
+    private final ExpenseCategoryService expenseCategoryService;
 
     /**
      * Repository for managing persistence operations related to the Expense entity.
@@ -95,8 +87,7 @@ public class ExpenseService {
     public ExpenseResponseDto save(Expense expense) {
         // Fetch and set the ExpenseCategory based on the provided categoryId
         Long categoryId = expense.getCategory().getId();
-        ExpenseCategory category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Expense category not found with ID: " + categoryId));
+        ExpenseCategory category = expenseCategoryService.getById(categoryId);
         expense.setCategory(category);
 
         // Save the entity using expenseRepository
@@ -130,8 +121,7 @@ public class ExpenseService {
 
         // Fetch and set the ExpenseCategory based on the provided categoryId
         Long categoryId = expense.getCategory().getId();
-        ExpenseCategory category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Expense category not found with ID: " + categoryId));
+        ExpenseCategory category = expenseCategoryService.getById(categoryId);
         expense.setCategory(category);
 
         // Ensure the user of the expense matches the user in the provided expense
