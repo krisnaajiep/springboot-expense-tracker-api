@@ -4,6 +4,7 @@
  * <ul>
  *     <li>{@link com.krisnaajiep.expensetrackerapi.service.AuthService} for handling user authentication and management processes</li>
  *     <li>{@link com.krisnaajiep.expensetrackerapi.service.ExpenseService} for handling expense management processes</li>
+ *     <li>{@link com.krisnaajiep.expensetrackerapi.service.ExpenseCategoryService} for handling expense category management processes</li>
  * </ul>
  *
  * @since 0.0.1
