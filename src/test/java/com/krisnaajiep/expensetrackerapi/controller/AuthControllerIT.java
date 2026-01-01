@@ -14,6 +14,7 @@ import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
+import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,14 +22,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -62,22 +64,26 @@ class AuthControllerIT {
     @Autowired
     private AuthProperties authProperties;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
     private final RegisterRequestDto registerRequestDto = new RegisterRequestDto();
     private final LoginRequestDto loginRequestDto = new LoginRequestDto();
     private final RefreshTokenRequestDto refreshTokenRequestDto = new RefreshTokenRequestDto();
 
-    private static final String USER_NAME = "John Doe";
-    private static final String USER_EMAIL = "john@doe.com";
-    private static final String USER_PASSWORD = StringUtility.generatePasswordForTest();
+    private static final String USER_NAME = TestDataGenerator.generateFullName();
+    private static final String USER_EMAIL = TestDataGenerator.generateEmail();
+    private static final String USER_PASSWORD = TestDataGenerator.generatePassword();
 
     @BeforeEach
     void setUp() {
+        // Clear Redis cache
+        Objects.requireNonNull(redisTemplate.getConnectionFactory()).getConnection().serverCommands().flushDb();
+
         // Clean up the database before each test
         expenseRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
-
-        passwordEncoder = new BCryptPasswordEncoder();
     }
 
     @Test

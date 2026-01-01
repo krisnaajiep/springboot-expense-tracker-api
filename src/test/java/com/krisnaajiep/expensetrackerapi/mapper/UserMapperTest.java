@@ -2,7 +2,7 @@ package com.krisnaajiep.expensetrackerapi.mapper;
 
 import com.krisnaajiep.expensetrackerapi.dto.request.RegisterRequestDto;
 import com.krisnaajiep.expensetrackerapi.model.User;
-import com.krisnaajiep.expensetrackerapi.util.StringUtility;
+import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ class UserMapperTest {
     void setUp() {
         registerRequestDto.setName("      John Doe   ");
         registerRequestDto.setEmail("john@doe.com");
-        registerRequestDto.setPassword(StringUtility.generatePasswordForTest());
+        registerRequestDto.setPassword(TestDataGenerator.generatePassword());
     }
 
     @Test

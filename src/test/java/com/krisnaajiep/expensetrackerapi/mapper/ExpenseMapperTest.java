@@ -3,12 +3,10 @@ package com.krisnaajiep.expensetrackerapi.mapper;
 import com.krisnaajiep.expensetrackerapi.dto.request.ExpenseRequestDto;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.model.User;
+import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.util.HtmlUtils;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,9 +17,9 @@ class ExpenseMapperTest {
     @BeforeEach
     void setUp() {
         expenseRequestDto.setDescription("  Weekly grocery shopping  ");
-        expenseRequestDto.setAmount(new BigDecimal("150.00"));
-        expenseRequestDto.setCategory("Groceries");
-        expenseRequestDto.setDate(LocalDate.now());
+        expenseRequestDto.setAmount(TestDataGenerator.generateAmount(10, 500));
+        expenseRequestDto.setCategoryId(TestDataGenerator.generateRandomNumber(1, 100));
+        expenseRequestDto.setDate(TestDataGenerator.generateDate(-30, 0));
     }
 
     @Test
