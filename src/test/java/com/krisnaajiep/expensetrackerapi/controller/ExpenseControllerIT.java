@@ -10,10 +10,10 @@ import com.krisnaajiep.expensetrackerapi.model.ExpenseCategory;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseCategoryRepository;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
-import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
+import com.krisnaajiep.expensetrackerapi.util.TestConstants;
 import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -24,7 +24,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -46,9 +48,6 @@ class ExpenseControllerIT {
     private ExpenseCategoryRepository categoryRepository;
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -63,10 +62,13 @@ class ExpenseControllerIT {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private User user;
     private Expense anotherExpense;
     private String accessToken;
-    private List<ExpenseCategory> categories;
+    private List<ExpenseCategory> categories = new ArrayList<>();
 
     private final ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto();
     private final Map<String, Object> invalidExpenseRequest = new HashMap<>();
@@ -78,22 +80,13 @@ class ExpenseControllerIT {
         Objects.requireNonNull(redisTemplate.getConnectionFactory()).getConnection().serverCommands().flushDb();
 
         // Clean up the database before each test
-        expenseRepository.deleteAll();
-        categoryRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
+        JdbcTestUtils.deleteFromTables(jdbcTemplate, TestConstants.DATABASE_TABLE_NAMES);
 
-        categories = categoryRepository.saveAll(
-                List.of(
-                        ExpenseCategory.builder().name("Groceries").build(),
-                        ExpenseCategory.builder().name("Leisure").build(),
-                        ExpenseCategory.builder().name("Electronics").build(),
-                        ExpenseCategory.builder().name("Utilities").build(),
-                        ExpenseCategory.builder().name("Clothing").build(),
-                        ExpenseCategory.builder().name("Health").build(),
-                        ExpenseCategory.builder().name("Others").build()
-                )
-        );
+        for (String categoryName : TestConstants.EXPENSE_CATEGORY_NAMES) {
+            categories.add(ExpenseCategory.builder().name(categoryName).build());
+        }
+
+        categories = categoryRepository.saveAll(categories);
 
         user = createUser(); // Create a test user
 

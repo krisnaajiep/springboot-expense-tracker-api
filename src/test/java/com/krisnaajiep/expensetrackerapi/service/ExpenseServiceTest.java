@@ -6,7 +6,6 @@ import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
 import com.krisnaajiep.expensetrackerapi.model.ExpenseCategory;
 import com.krisnaajiep.expensetrackerapi.model.User;
-import com.krisnaajiep.expensetrackerapi.repository.ExpenseCategoryRepository;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
 import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
@@ -37,7 +36,7 @@ class ExpenseServiceTest {
     private ExpenseRepository expenseRepository;
 
     @Mock
-    private ExpenseCategoryRepository categoryRepository;
+    private ExpenseCategoryService categoryService;
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
@@ -76,17 +75,19 @@ class ExpenseServiceTest {
 
     @Test
     void testSave_CategoryNotFound() {
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.empty());
+        when(categoryService.getById(category.getId())).thenThrow(
+                new NotFoundException("Category Not Found")
+        );
 
         assertThrows(NotFoundException.class, () -> expenseService.save(expense));
 
-        verify(categoryRepository, times(1)).findById(category.getId());
+        verify(categoryService, times(1)).getById(category.getId());
         verifyNoMoreInteractions(expenseRepository);
     }
 
     @Test
     void testSave_Success() {
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
+        when(categoryService.getById(category.getId())).thenReturn(category);
         when(expenseRepository.save(expense)).thenReturn(expense);
         when(redisTemplate.keys(anyString())).thenReturn(Set.of());
 
@@ -115,14 +116,16 @@ class ExpenseServiceTest {
     @Test
     void testUpdate_CategoryNotFound() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.empty());
+        when(categoryService.getById(category.getId())).thenThrow(
+                new  NotFoundException("Category Not Found")
+        );
 
         assertThrows(NotFoundException.class, () -> expenseService.update(expense.getId(), expense));
 
         verify(expenseRepository, times(1)).findById(expense.getId());
-        verify(categoryRepository, times(1)).findById(category.getId());
+        verify(categoryService, times(1)).getById(category.getId());
         verifyNoMoreInteractions(expenseRepository);
-        verifyNoMoreInteractions(categoryRepository);
+        verifyNoMoreInteractions(categoryService);
     }
 
     @Test
@@ -137,7 +140,7 @@ class ExpenseServiceTest {
                 .build();
 
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
+        when(categoryService.getById(category.getId())).thenReturn(category);
 
         assertThrows(AccessDeniedException.class, () -> expenseService.update(expense.getId(), anotherExpense));
 
@@ -148,7 +151,7 @@ class ExpenseServiceTest {
     @Test
     void testUpdateSuccess() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
+        when(categoryService.getById(category.getId())).thenReturn(category);
         when(redisTemplate.keys(anyString())).thenReturn(Set.of());
 
         ExpenseResponseDto response = expenseService.update(expense.getId(), expense);

@@ -50,6 +50,7 @@ and user authentication in Spring Boot.
 - **Delete an existing expense**: Delete an existing expense using the `DELETE` method.
 - **List and filter all past expenses**: Get the list of expenses with pagination and filtering by date range using the
   `GET` method.
+- **List all expenses categories**: Get the list of expense categories using the `GET` method.
 - **Refresh Token**: Get a new access token using the `POST` method.
 - **Revoke Tokens**: Invalidates all refresh tokens for the authenticated user using the `POST` method.
 - **Expenses Caching**: Speeds up repeated requests for filtered/paginated expenses using Redis with 60-minute TTL.
@@ -112,6 +113,7 @@ How to install:
    SPRING_DATA_REDIS_PORT=6379
    SPRING_DATA_REDIS_USERNAME=
    SPRING_DATA_REDIS_PASSWORD=
+   SPRING_DATA_REDIS_DATABASE=0
    ```
 
 6. Build the project
@@ -159,9 +161,32 @@ How to install:
        "description": "Purchase of new computer",
        "amount": "800",
        "date": "2025-06-30",
-       "category": "ELECTRONICS"
+       "categoryId": 1
    }
    ```
+
+### Expense Category
+
+Expense categories are stored in a separate table (`ExpenseCategory`).
+Each expense references a category using a foreign key (`CategoryID`).
+Categories must exist before they can be assigned to an expense.
+
+The following expense categories are automatically created during database migration:
+
+- Others
+- Health
+- Clothing
+- Utilities
+- Electronics
+- Leisure
+- Groceries
+
+How to get all expense categories:
+
+```http
+GET http://localhost:8080/categories
+Authorization: Bearer <your_access_token>
+```
 
 ### API Documentation
 

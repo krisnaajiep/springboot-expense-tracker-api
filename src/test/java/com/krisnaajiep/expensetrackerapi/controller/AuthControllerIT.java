@@ -8,12 +8,12 @@ import com.krisnaajiep.expensetrackerapi.dto.request.RegisterRequestDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.TokenResponseDto;
 import com.krisnaajiep.expensetrackerapi.model.RefreshToken;
 import com.krisnaajiep.expensetrackerapi.model.User;
-import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import com.krisnaajiep.expensetrackerapi.repository.RefreshTokenRepository;
 import com.krisnaajiep.expensetrackerapi.repository.UserRepository;
 import com.krisnaajiep.expensetrackerapi.security.JwtUtility;
 import com.krisnaajiep.expensetrackerapi.security.config.AuthProperties;
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
+import com.krisnaajiep.expensetrackerapi.util.TestConstants;
 import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -24,8 +24,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -47,9 +49,6 @@ class AuthControllerIT {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
-    private ExpenseRepository expenseRepository;
-
-    @Autowired
     private JwtUtility jwtUtility;
 
     @Autowired
@@ -67,6 +66,9 @@ class AuthControllerIT {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private final RegisterRequestDto registerRequestDto = new RegisterRequestDto();
     private final LoginRequestDto loginRequestDto = new LoginRequestDto();
     private final RefreshTokenRequestDto refreshTokenRequestDto = new RefreshTokenRequestDto();
@@ -81,9 +83,7 @@ class AuthControllerIT {
         Objects.requireNonNull(redisTemplate.getConnectionFactory()).getConnection().serverCommands().flushDb();
 
         // Clean up the database before each test
-        expenseRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        userRepository.deleteAll();
+        JdbcTestUtils.deleteFromTables(jdbcTemplate, TestConstants.DATABASE_TABLE_NAMES);
     }
 
     @Test
