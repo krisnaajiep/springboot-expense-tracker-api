@@ -13,7 +13,10 @@ Version 1.0
 import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseCategoryResponseDto;
 import com.krisnaajiep.expensetrackerapi.service.ExpenseCategoryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +36,26 @@ public class ExpenseCategoryController {
 
     @Operation(summary = "List all expense categories")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Expense categories listed successfully"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Expense categories listed successfully",
+                    content = @Content(
+                            array = @ArraySchema(schema = @Schema(implementation = ExpenseCategoryResponseDto.class)),
+                            examples = @ExampleObject(
+                                    value = """
+                                            [
+                                                {"id": 1, "name": "Others"},
+                                                {"id": 2, "name": "Health"},
+                                                {"id": 3, "name": "Clothing"},
+                                                {"id": 4, "name": "Utilities"},
+                                                {"id": 5, "name": "Electronics"},
+                                                {"id": 6, "name": "Leisure"},
+                                                {"id": 7, "name": "Groceries"}
+                                            ]
+                                            """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
     })
     @GetMapping(
