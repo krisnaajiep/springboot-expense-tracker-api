@@ -17,6 +17,7 @@ import com.krisnaajiep.expensetrackerapi.dto.response.PagedResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.mapper.ExpenseMapper;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
+import com.krisnaajiep.expensetrackerapi.model.ExpenseCategory;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -48,6 +49,8 @@ import java.util.UUID;
 public class ExpenseService {
     private static final Logger log = LoggerFactory.getLogger(ExpenseService.class);
 
+    private final ExpenseCategoryService expenseCategoryService;
+
     /**
      * Repository for managing persistence operations related to the Expense entity.
      * Provides methods to perform CRUD operations and custom queries.
@@ -74,12 +77,19 @@ public class ExpenseService {
 
     /**
      * Saves the provided expense entity into the database and converts it into a DTO representation.
+     * Before saving, it fetches and sets the associated ExpenseCategory based on the category ID.
      *
      * @param expense the expense entity to be persisted
      * @return a DTO representation of the saved expense
+     * @throws NotFoundException if the expense category is not found
      */
     @Transactional
     public ExpenseResponseDto save(Expense expense) {
+        // Fetch and set the ExpenseCategory based on the provided categoryId
+        Long categoryId = expense.getCategory().getId();
+        ExpenseCategory category = expenseCategoryService.getById(categoryId);
+        expense.setCategory(category);
+
         // Save the entity using expenseRepository
         Expense savedExpense = expenseRepository.save(expense);
 
@@ -95,11 +105,12 @@ public class ExpenseService {
     /**
      * Updates an existing expense with new values provided in the given expense object.
      * Validates that the expense exists and the user associated with it matches the user in the given expense.
+     * Before updating, it fetches and sets the associated ExpenseCategory based on the category ID.
      *
      * @param expenseId the ID of the expense to be updated
      * @param expense the new expense object containing updated details
      * @return a DTO representation of the updated expense
-     * @throws NotFoundException if the expense with the given ID does not exist
+     * @throws NotFoundException if the expense with the given ID does not exist or if the expense category is not found
      * @throws AccessDeniedException if the user associated with the existing expense does not match the user in the provided expense
      */
     @Transactional
@@ -107,6 +118,11 @@ public class ExpenseService {
         // Check if the expense exists
         Expense existingExpense = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new NotFoundException("Expense not found with ID: " + expenseId));
+
+        // Fetch and set the ExpenseCategory based on the provided categoryId
+        Long categoryId = expense.getCategory().getId();
+        ExpenseCategory category = expenseCategoryService.getById(categoryId);
+        expense.setCategory(category);
 
         // Ensure the user of the expense matches the user in the provided expense
         if (!existingExpense.getUser().getId().equals(expense.getUser().getId())) {

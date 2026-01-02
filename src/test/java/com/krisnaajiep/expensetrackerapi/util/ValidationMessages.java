@@ -19,6 +19,7 @@ public class ValidationMessages {
     public static final String DECIMAL_MIN_MESSAGE = "must be greater than or equal to 0.01";
     public static final String DIGITS_MESSAGE = "numeric value out of bounds (<38 digits>.<2 digits> expected)";
     public static final String PAST_OR_PRESENT_MESSAGE = "must be a date in the past or in the present";
+    public static final String POSITIVE_MESSAGE = "must be greater than 0";
 
     public static String sizeMessage(int min) {
         return String.format("size must be between %d and %d", min, 255);

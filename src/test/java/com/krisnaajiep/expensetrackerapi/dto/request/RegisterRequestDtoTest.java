@@ -1,6 +1,7 @@
 package com.krisnaajiep.expensetrackerapi.dto.request;
 
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
+import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import com.krisnaajiep.expensetrackerapi.util.ValidationMessages;
 import jakarta.validation.ConstraintViolation;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,9 +16,10 @@ class RegisterRequestDtoTest extends RequestDtoTest<RegisterRequestDto> {
 
     @BeforeEach
     void setUp() {
-        registerRequestDto.setName("John Doe");
-        registerRequestDto.setEmail("john@doe.com");
-        registerRequestDto.setPassword(StringUtility.generatePasswordForTest());
+        // Initialize with valid data
+        registerRequestDto.setName(TestDataGenerator.generateFullName());
+        registerRequestDto.setEmail(TestDataGenerator.generateEmail());
+        registerRequestDto.setPassword(TestDataGenerator.generatePassword());
     }
 
     @Test

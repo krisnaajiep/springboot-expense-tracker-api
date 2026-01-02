@@ -16,7 +16,7 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -39,12 +39,9 @@ public class ExpenseRequestDto {
     private BigDecimal amount;
 
     @NotNull
-    @Pattern(
-            regexp = "^(Groceries|Leisure|Electronics|Utilities|Clothing|Health|Others)$",
-            message = "{category.Pattern}"
-    )
-    @Schema(description = "Expense category", example = "Electronics")
-    private String category;
+    @Positive
+    @Schema(description = "Expense category ID", example = "1")
+    private Long categoryId;
 
     @NotNull
     @DateTimeFormat(pattern = "yyyy-MM-dd")

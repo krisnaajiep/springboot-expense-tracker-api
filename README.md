@@ -1,6 +1,6 @@
 # Spring Boot Expense Tracker API
 
-![Current Version](https://img.shields.io/badge/version-2.0.0-green)
+![Current Version](https://img.shields.io/badge/version-3.0.0-green)
 [![Framework](https://img.shields.io/badge/framework-Spring_Boot-6DB33F?logo=springboot&logoColor=white)](https://spring.io/)
 [![Redis](https://img.shields.io/badge/cache-Redis-DC382D?logo=redis&logoColor=white)](https://redis.io/)
 
@@ -32,13 +32,14 @@ and user authentication in Spring Boot.
 ## Technologies Used
 
 - Java 21.0.6 LTS
-- Maven 3.9.9
+- Maven 3.9.11
 - H2 Database 2.3.232
 - Microsoft SQL Server 2022
-- Spring Boot 3.4.7
-- Lombok 1.18.38
+- Spring Boot 3.4.12
+- Lombok 1.18.42
 - [JJWT](https://github.com/jwtk/jjwt) 0.12.6
 - Redis 8.0.3
+- Flyway 10.20.1
 
 ## Features
 
@@ -49,10 +50,21 @@ and user authentication in Spring Boot.
 - **Delete an existing expense**: Delete an existing expense using the `DELETE` method.
 - **List and filter all past expenses**: Get the list of expenses with pagination and filtering by date range using the
   `GET` method.
+- **List all expenses categories**: Get the list of expense categories using the `GET` method.
 - **Refresh Token**: Get a new access token using the `POST` method.
 - **Revoke Tokens**: Invalidates all refresh tokens for the authenticated user using the `POST` method.
 - **Expenses Caching**: Speeds up repeated requests for filtered/paginated expenses using Redis with 60-minute TTL.
 - **Brute-force Protection**: Automatically jail IP addresses after repeated failed login attempts.
+
+## Database Migration
+
+Database migration is managed using [Flyway](https://flywaydb.org/).
+
+- The migration scripts are located in the `src/main/resources/db/migration` directory.
+- The initial migration script is defined in `V1__Create_initial_schema.sql`.
+- Migrations are automatically executed on application startup
+
+Before running the application, make sure the database exists.
 
 ## Setup
 
@@ -101,6 +113,7 @@ How to install:
    SPRING_DATA_REDIS_PORT=6379
    SPRING_DATA_REDIS_USERNAME=
    SPRING_DATA_REDIS_PASSWORD=
+   SPRING_DATA_REDIS_DATABASE=0
    ```
 
 6. Build the project
@@ -117,7 +130,7 @@ How to install:
 7. Run the JAR file
 
    ```bash
-   java -jar target/expense-tracker-api-2.0.0.jar
+   java -jar target/expense-tracker-api-3.0.0.jar
    ```
 
 ## Usage
@@ -148,9 +161,32 @@ How to install:
        "description": "Purchase of new computer",
        "amount": "800",
        "date": "2025-06-30",
-       "category": "ELECTRONICS"
+       "categoryId": 1
    }
    ```
+
+### Expense Category
+
+Expense categories are stored in a separate table (`ExpenseCategory`).
+Each expense references a category using a foreign key (`CategoryID`).
+Categories must exist before they can be assigned to an expense.
+
+The following expense categories are automatically created during database migration:
+
+- Others
+- Health
+- Clothing
+- Utilities
+- Electronics
+- Leisure
+- Groceries
+
+How to get all expense categories:
+
+```http
+GET http://localhost:8080/categories
+Authorization: Bearer <your_access_token>
+```
 
 ### API Documentation
 

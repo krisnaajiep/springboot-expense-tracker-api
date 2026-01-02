@@ -63,6 +63,7 @@ public class ExpenseController {
             @ApiResponse(responseCode = "201", description = "Expense created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Expense category not found", content = @Content),
     })
     @PostMapping(
             value = "/expenses",
@@ -84,7 +85,7 @@ public class ExpenseController {
             @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
             @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Expense not found", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Expense or category not found", content = @Content),
     })
     @PutMapping(
             value = "/expenses/{expenseId}",

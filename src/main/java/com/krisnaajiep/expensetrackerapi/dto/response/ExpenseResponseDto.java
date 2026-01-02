@@ -22,19 +22,19 @@ import java.util.UUID;
 @AllArgsConstructor
 @Schema(name = "ExpenseResponse", description = "Expense response body")
 public class ExpenseResponseDto {
-    @Schema(description = "Expenses ID", example = "fa0f58de-6ed9-4502-9b34-016d614aa5ab")
+    @Schema(description = "Expense ID", example = "fa0f58de-6ed9-4502-9b34-016d614aa5ab")
     private UUID id;
 
-    @Schema(description = "Expenses description", example = "Purchase of new computer")
+    @Schema(description = "Expense description", example = "Purchase of new computer")
     private String description;
 
-    @Schema(description = "Expenses amount", example = "800.00")
+    @Schema(description = "Expense amount", example = "800.00")
     private BigDecimal amount;
 
-    @Schema(description = "Expenses category", example = "Electronics")
+    @Schema(description = "Expense category", example = "Electronics")
     private String category;
 
-    @Schema(description = "Expenses date", example = "2025-06-30")
+    @Schema(description = "Expense date", example = "2025-06-30")
     private LocalDate date;
 
     @Override

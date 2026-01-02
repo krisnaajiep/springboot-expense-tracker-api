@@ -4,9 +4,11 @@ import com.krisnaajiep.expensetrackerapi.dto.response.ExpenseResponseDto;
 import com.krisnaajiep.expensetrackerapi.dto.response.PagedResponseDto;
 import com.krisnaajiep.expensetrackerapi.handler.exception.NotFoundException;
 import com.krisnaajiep.expensetrackerapi.model.Expense;
+import com.krisnaajiep.expensetrackerapi.model.ExpenseCategory;
 import com.krisnaajiep.expensetrackerapi.model.User;
 import com.krisnaajiep.expensetrackerapi.repository.ExpenseRepository;
 import com.krisnaajiep.expensetrackerapi.util.StringUtility;
+import com.krisnaajiep.expensetrackerapi.util.TestDataGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,8 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,32 +36,58 @@ class ExpenseServiceTest {
     private ExpenseRepository expenseRepository;
 
     @Mock
+    private ExpenseCategoryService categoryService;
+
+    @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
     @InjectMocks
     private ExpenseService expenseService;
 
     private final User user = new User();
+    private final User anotherUser = new User();
+    private final ExpenseCategory category = new ExpenseCategory();
     private final Expense expense = new Expense();
     private final List<Expense> expenses = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
         user.setId(1L);
-        user.setEmail("john@doe");
+        user.setEmail(TestDataGenerator.generateEmail());
         user.setPassword(StringUtility.generateRandomString(8));
-        user.setName("John Doe");
+        user.setName(TestDataGenerator.generateFullName());
+
+        anotherUser.setId(2L);
+        anotherUser.setEmail(TestDataGenerator.generateEmail());
+        anotherUser.setPassword(StringUtility.generateRandomString(8));
+        anotherUser.setName(TestDataGenerator.generateFullName());
+
+        category.setId(TestDataGenerator.generateRandomNumber(1, 1000));
+        category.setName("Others");
 
         expense.setId(UUID.randomUUID());
-        expense.setDescription("Test Expense");
-        expense.setAmount(new BigDecimal("100.00"));
-        expense.setCategory(Expense.Category.fromDisplayName("Others"));
-        expense.setDate(LocalDate.now());
+        expense.setDescription(TestDataGenerator.generateDescription(10));
+        expense.setAmount(TestDataGenerator.generateAmount(10, 1000));
+        expense.setCategory(category);
+        expense.setDate(TestDataGenerator.generateDate(-30, 0));
         expense.setUser(user);
     }
 
     @Test
+    void testSave_CategoryNotFound() {
+        when(categoryService.getById(category.getId())).thenThrow(
+                new NotFoundException("Category Not Found")
+        );
+
+        assertThrows(NotFoundException.class, () -> expenseService.save(expense));
+
+        verify(categoryService, times(1)).getById(category.getId());
+        verifyNoMoreInteractions(expenseRepository);
+    }
+
+    @Test
     void testSave_Success() {
+        when(categoryService.getById(category.getId())).thenReturn(category);
         when(expenseRepository.save(expense)).thenReturn(expense);
         when(redisTemplate.keys(anyString())).thenReturn(Set.of());
 
@@ -71,14 +97,14 @@ class ExpenseServiceTest {
         assertEquals(expense.getId(), response.getId());
         assertEquals(expense.getDescription(), response.getDescription());
         assertEquals(expense.getAmount(), response.getAmount());
-        assertEquals(expense.getCategory().getDisplayName(), response.getCategory());
+        assertEquals(expense.getCategory().getName(), response.getCategory());
         assertEquals(expense.getDate(), response.getDate());
 
         verify(expenseRepository, times(1)).save(expense);
     }
 
     @Test
-    void testUpdate_NotFound() {
+    void testUpdate_ExpenseNotFound() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> expenseService.update(expense.getId(), expense));
@@ -88,24 +114,33 @@ class ExpenseServiceTest {
     }
 
     @Test
-    void testUpdate_AccessDenied() {
-        User anotherUser = User.builder()
-                .id(2L)
-                .email("jane@doe")
-                .password(StringUtility.generateRandomString(8))
-                .name("Jane Doe")
-                .build();
+    void testUpdate_CategoryNotFound() {
+        when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+        when(categoryService.getById(category.getId())).thenThrow(
+                new  NotFoundException("Category Not Found")
+        );
 
+        assertThrows(NotFoundException.class, () -> expenseService.update(expense.getId(), expense));
+
+        verify(expenseRepository, times(1)).findById(expense.getId());
+        verify(categoryService, times(1)).getById(category.getId());
+        verifyNoMoreInteractions(expenseRepository);
+        verifyNoMoreInteractions(categoryService);
+    }
+
+    @Test
+    void testUpdate_AccessDenied() {
         Expense anotherExpense = Expense.builder()
                 .id(UUID.randomUUID())
-                .description("Another Expense")
-                .amount(new BigDecimal("200.00"))
-                .category(Expense.Category.fromDisplayName("Others"))
-                .date(LocalDate.now())
+                .description(TestDataGenerator.generateDescription(10))
+                .amount(TestDataGenerator.generateAmount(10, 100))
+                .category(category)
+                .date(TestDataGenerator.generateDate(-30, 0))
                 .user(anotherUser)
                 .build();
 
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+        when(categoryService.getById(category.getId())).thenReturn(category);
 
         assertThrows(AccessDeniedException.class, () -> expenseService.update(expense.getId(), anotherExpense));
 
@@ -116,6 +151,7 @@ class ExpenseServiceTest {
     @Test
     void testUpdateSuccess() {
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
+        when(categoryService.getById(category.getId())).thenReturn(category);
         when(redisTemplate.keys(anyString())).thenReturn(Set.of());
 
         ExpenseResponseDto response = expenseService.update(expense.getId(), expense);
@@ -124,7 +160,7 @@ class ExpenseServiceTest {
         assertEquals(expense.getId(), response.getId());
         assertEquals(expense.getDescription(), response.getDescription());
         assertEquals(expense.getAmount(), response.getAmount());
-        assertEquals(expense.getCategory().getDisplayName(), response.getCategory());
+        assertEquals(expense.getCategory().getName(), response.getCategory());
         assertEquals(expense.getDate(), response.getDate());
 
         verify(expenseRepository, times(1)).findById(expense.getId());
@@ -141,13 +177,6 @@ class ExpenseServiceTest {
 
     @Test
     void testDelete_AccessDenied() {
-        User anotherUser = User.builder()
-                .id(2L)
-                .email("jane@doe")
-                .password(StringUtility.generateRandomString(8))
-                .name("Jane Doe")
-                .build();
-
         when(expenseRepository.findById(expense.getId())).thenReturn(Optional.of(expense));
 
         assertThrows(AccessDeniedException.class, () -> expenseService.delete(anotherUser.getId(), expense.getId()));
@@ -202,7 +231,7 @@ class ExpenseServiceTest {
             assertEquals(expense.getId(), dto.getId());
             assertEquals(expense.getDescription(), dto.getDescription());
             assertEquals(expense.getAmount(), dto.getAmount());
-            assertEquals(expense.getCategory().getDisplayName(), dto.getCategory());
+            assertEquals(expense.getCategory().getName(), dto.getCategory());
             assertEquals(expense.getDate(), dto.getDate());
         }
 
@@ -214,10 +243,10 @@ class ExpenseServiceTest {
         for (int i = 0; i < 100; i++) {
             Expense expense = Expense.builder()
                     .id(UUID.randomUUID())
-                    .description("Expense " + (i + 1))
-                    .amount(new BigDecimal("100.00"))
-                    .category(Expense.Category.fromDisplayName("Others"))
-                    .date(LocalDate.now())
+                    .description(TestDataGenerator.generateDescription(10))
+                    .amount(TestDataGenerator.generateAmount(10, 1000))
+                    .category(category)
+                    .date(TestDataGenerator.generateDate(-30, 0))
                     .user(user)
                     .build();
             expenses.add(expense);
