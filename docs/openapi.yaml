@@ -1,4 +1,4 @@
-openapi: 3.0.1
+openapi: 3.1.0
 info:
   title: Expense Tracker API
   description: |
@@ -12,7 +12,7 @@ info:
   license:
     name: MIT License
     url: https://opensource.org/licenses/MIT
-  version: 2.0.0
+  version: 3.0.0
 servers:
 - url: http://localhost:8080
   description: ⚠️ Only for local testing
@@ -21,6 +21,8 @@ tags:
   description: User authentication endpoints
 - name: Expense
   description: Expense management endpoints
+- name: Expense Category
+  description: Expense category endpoints
 paths:
   /register:
     post:
@@ -48,7 +50,7 @@ paths:
   /login:
     post:
       tags:
-      - Auth
+        - Auth
       summary: Login user
       operationId: login
       requestBody:
@@ -73,7 +75,7 @@ paths:
   /refresh:
     post:
       tags:
-        - Auth
+      - Auth
       summary: Refresh token
       operationId: refresh
       requestBody:
@@ -129,6 +131,8 @@ paths:
           description: Invalid request
         "401":
           description: Unauthorized
+        "404":
+          description: Expense category not found
       security:
         - BearerToken: []
     get:
@@ -170,17 +174,17 @@ paths:
         description: Zero-based page index (0..N)
         required: false
         schema:
-          minimum: 0
           type: integer
           default: 0
+          minimum: 0
       - name: size
         in: query
         description: The size of the page to be returned
         required: false
         schema:
-          minimum: 1
           type: integer
           default: 20
+          minimum: 1
       - name: sort
         in: query
         description: "Sorting criteria in the format: property,(asc|desc). Default\
@@ -236,7 +240,7 @@ paths:
         "403":
           description: Forbidden
         "404":
-          description: Expense not found
+          description: Expense or category not found
       security:
         - BearerToken: []
     delete:
@@ -262,95 +266,127 @@ paths:
           description: Expense not found
       security:
         - BearerToken: []
+  /categories:
+    get:
+      tags:
+      - Expense Category
+      summary: List all expense categories
+      operationId: findAll_1
+      responses:
+        "200":
+          description: Expense categories listed successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpenseCategoryResponse"
+              example:
+              - id: 1
+                name: Others
+              - id: 2
+                name: Health
+              - id: 3
+                name: Clothing
+              - id: 4
+                name: Utilities
+              - id: 5
+                name: Electronics
+              - id: 6
+                name: Leisure
+              - id: 7
+                name: Groceries
+        "401":
+          description: Unauthorized
 components:
   schemas:
     ExpenseRequest:
-      required:
-      - amount
-      - category
-      - date
-      - description
       type: object
+      description: Expense request body
       properties:
         description:
+          type: string
+          description: Expense description
+          example: Purchase of new computer
           maxLength: 255
           minLength: 1
+        amount:
+          type: number
+          description: Expense amount
+          example: 800.0
+          minimum: 0.01
+        categoryId:
+          type: integer
+          format: int64
+          description: Expense category ID
+          example: 1
+        date:
+          type: string
+          format: date
+          description: Expense date
+          example: 2025-06-30
+      required:
+      - amount
+      - categoryId
+      - date
+      - description
+    ExpenseResponse:
+      type: object
+      description: Expense response body
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Expense ID
+          example: fa0f58de-6ed9-4502-9b34-016d614aa5ab
+        description:
           type: string
           description: Expense description
           example: Purchase of new computer
         amount:
-          minimum: 0.01
-          exclusiveMinimum: false
           type: number
           description: Expense amount
           example: 800.0
         category:
-          pattern: ^(Groceries|Leisure|Electronics|Utilities|Clothing|Health|Others)$
           type: string
           description: Expense category
           example: Electronics
         date:
           type: string
+          format: date
           description: Expense date
-          format: date
           example: 2025-06-30
-      description: Expense request body
-    ExpenseResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Expenses ID
-          format: uuid
-          example: fa0f58de-6ed9-4502-9b34-016d614aa5ab
-        description:
-          type: string
-          description: Expenses description
-          example: Purchase of new computer
-        amount:
-          type: number
-          description: Expenses amount
-          example: 800.0
-        category:
-          type: string
-          description: Expenses category
-          example: Electronics
-        date:
-          type: string
-          description: Expenses date
-          format: date
-          example: 2025-06-30
-      description: Expense response body
     RegisterRequest:
+      type: object
+      description: Register request body
+      properties:
+        name:
+          type: string
+          description: User name
+          example: John Doe
+          maxLength: 255
+          minLength: 1
+          pattern: "^[\\p{L}\\s,.'-]*$"
+        email:
+          type: string
+          description: User email
+          example: john@doe.com
+          maxLength: 255
+          minLength: 1
+        password:
+          type: string
+          description: User password
+          example: MyPass_1234
+          maxLength: 255
+          minLength: 8
+          pattern: "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@_#\\-$]).*$"
       required:
       - email
       - name
       - password
-      type: object
-      properties:
-        name:
-          maxLength: 255
-          minLength: 1
-          pattern: "^[\\p{L}\\s,.'-]*$"
-          type: string
-          description: User name
-          example: John Doe
-        email:
-          maxLength: 255
-          minLength: 1
-          type: string
-          description: User email
-          example: john@doe.com
-        password:
-          maxLength: 255
-          minLength: 8
-          pattern: "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@_#\\-$]).*$"
-          type: string
-          description: User password
-          example: MyPass_1234
-      description: Register request body
     TokenResponse:
       type: object
+      description: Token response body
       properties:
         access-token:
           type: string
@@ -358,34 +394,33 @@ components:
         refresh-token:
           type: string
           description: Refresh token
-      description: Token response body
     RefreshTokenRequest:
-      required:
-      - refresh-token
       type: object
+      description: Refresh token request body
       properties:
         refresh-token:
-          minLength: 1
           type: string
           description: Refresh token
-      description: Refresh token request body
-    LoginRequest:
+          minLength: 1
       required:
-      - email
-      - password
+      - refresh-token
+    LoginRequest:
       type: object
+      description: Login request body
       properties:
         email:
-          minLength: 1
           type: string
           description: User email
           example: john@doe.com
-        password:
           minLength: 1
+        password:
           type: string
           description: User password
           example: MyPass_1234
-      description: Login request body
+          minLength: 1
+      required:
+      - email
+      - password
     PageMetadata:
       type: object
       properties:
@@ -401,14 +436,9 @@ components:
         totalPages:
           type: integer
           format: int64
-      description: Page metadata
-      example:
-        size: 10
-        number: 0
-        totalElements: 2
-        totalPages: 1
     PagedResponse:
       type: object
+      description: Paged response body
       properties:
         content:
           type: array
@@ -428,7 +458,25 @@ components:
             $ref: "#/components/schemas/ExpenseResponse"
         metadata:
           $ref: "#/components/schemas/PageMetadata"
-      description: Paged response body
+          description: Page metadata
+          example:
+            size: 10
+            number: 0
+            totalElements: 2
+            totalPages: 1
+    ExpenseCategoryResponse:
+      type: object
+      description: Expense category response body
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Expense category ID
+          example: 5
+        name:
+          type: string
+          description: Expense category name
+          example: Electronics
   securitySchemes:
     BearerToken:
       type: http

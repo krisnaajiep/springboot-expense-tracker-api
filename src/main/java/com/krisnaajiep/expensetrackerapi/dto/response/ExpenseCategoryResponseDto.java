@@ -18,7 +18,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Schema(name = "ExpenseCategoryResponse", description = "Expense category response body")
 public class ExpenseCategoryResponseDto {
-    @Schema(description = "Expense category ID", example = "1")
+    @Schema(description = "Expense category ID", example = "5")
     private Long id;
 
     @Schema(description = "Expense category name", example = "Electronics")
