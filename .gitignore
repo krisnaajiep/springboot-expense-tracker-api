@@ -35,3 +35,4 @@ build/
 ### ENV ###
 /.env
 /.env.test
+/.env.prod
