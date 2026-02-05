@@ -40,6 +40,7 @@ and user authentication in Spring Boot.
 - [JJWT](https://github.com/jwtk/jjwt) 0.12.6
 - Redis 8.0.3
 - Flyway 10.20.1
+- Docker 29.2.0
 
 ## Features
 
@@ -73,6 +74,7 @@ To run this API, you’ll need:
 * **Java**: Version 21 or higher
 * **Microsoft SQL Server** 2022 or higher
 * **Redis**: Version 8 or higher
+* **Docker**: Version 29 or higher (optional)
 
 How to install:
 
@@ -86,52 +88,58 @@ How to install:
 
    ```bash
    cd springboot-expense-tracker-api
-   ```
 
-3. Create the database
-
-   ```bash
-   sqlcmd -S <host> -U <your_database_username> -P <your_database_password> -No -Q "CREATE DATABASE ExpenseTrackerAPI"
-   ```
-
-4. Copy and rename `.env.example`
+3. Copy and rename `.env.example`
 
    ```bash
    cp .env.example .env
    ```
 
-5. Set environment variables in `.env` for database and JWT secret configuration
+4. Set environment variables in `.env` for database and JWT secret configuration
 
    ```dotenv
-   SPRING_DATASOURCE_URL=jdbc:sqlserver://localhost:1433;databaseName=ExpenseTrackerAPI;encrypt=true;trustServerCertificate=true
-   SPRING_DATASOURCE_USERNAME=<your_database_username>
-   SPRING_DATASOURCE_PASSWORD=<your_database_password>
+   DATABASE_NAME=ExpenseTrackerAPI
+   
+   SPRING_DATASOURCE_URL=jdbc:sqlserver://localhost:1433;databaseName=${DATABASE_NAME};encrypt=true;trustServerCertificate=true
+   SPRING_DATASOURCE_USERNAME=<database_username>
+   SPRING_DATASOURCE_PASSWORD=<database_password>
 
    JWT_SECRET=<your_strong_secret>
 
    SPRING_DATA_REDIS_HOST=localhost
    SPRING_DATA_REDIS_PORT=6379
-   SPRING_DATA_REDIS_USERNAME=
-   SPRING_DATA_REDIS_PASSWORD=
-   SPRING_DATA_REDIS_DATABASE=0
+   SPRING_DATA_REDIS_USERNAME=<redis_username>
+   SPRING_DATA_REDIS_PASSWORD=<redis_password>
+   SPRING_DATA_REDIS_DATABASE=<redis_database_index>
    ```
 
-6. Build the project
+5. Start the application.
 
-   ```bash
-   ./mvnw clean package
-   ```
-
-   If you want to skip the test:
-   ```bash
-   ./mvnw clean package -DskipTests
-   ```
-
-7. Run the JAR file
-
-   ```bash
-   java -jar target/expense-tracker-api-3.0.0.jar
-   ```
+   - Using Docker Compose:
+     - Copy and rename `.env` to `.env.prod`
+       ```bash
+       cp .env .env.prod
+       ```
+     - Change the `SPRING_DATASOURCE_URL` and `SPRING_DATA_REDIS_HOST` in `.env.prod` to use service names defined in `compose.yaml`
+       ```dotenv
+       SPRING_DATASOURCE_URL=jdbc:sqlserver://db:1433;databaseName=${DATABASE_NAME};encrypt=true;trustServerCertificate=true
+       SPRING_DATA_REDIS_HOST=redis
+       ```
+     - Run the following command to start the services:
+       ```bash
+       docker compose up
+       ```
+   - Using local installations:
+     - Start Microsoft SQL Server and Redis server.
+     - Create the database specified in `DATABASE_NAME` environment variable.
+     - Build the project
+       ```bash
+       ./mvnw clean package -DskipTests
+       ```
+     - Run the JAR file
+       ```bash
+       java -jar target/expense-tracker-api-3.0.0.jar
+       ```
 
 ## Usage
 
